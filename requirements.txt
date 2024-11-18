@@ -1,10 +1,9 @@
 streamlit
-yfinance
-matplotlib
-statsmodels
-scikit-learn
-arch
-seaborn
 pandas
 numpy
+yfinance
+requests
+python-dateutil
+matplotlib
+seaborn
 plotly
