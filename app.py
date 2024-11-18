@@ -649,6 +649,11 @@ elif selected_section == 'Portfolio Construction':
     msci_annual_returns = (1 + msci_world_returns).resample('Y').prod() - 1
     spy_annual_returns = (1 + spy_returns).resample('Y').prod() - 1
 
+    # Ensure they are Series
+    portfolio_annual_returns = portfolio_annual_returns.squeeze()
+    msci_annual_returns = msci_annual_returns.squeeze()
+    spy_annual_returns = spy_annual_returns.squeeze()
+
     # Combine into a DataFrame
     annual_returns = pd.DataFrame({
         'Dynamic Portfolio': portfolio_annual_returns,
@@ -873,6 +878,11 @@ elif selected_section == 'Mean Portfolio Evolution':
     mean_portfolio_annual_returns = (1 + mean_portfolio_returns).resample('Y').prod() - 1
     msci_annual_returns_aligned = (1 + msci_world_returns.loc[mean_portfolio_returns.index]).resample('Y').prod() - 1
     spy_annual_returns_aligned = (1 + spy_returns.loc[mean_portfolio_returns.index]).resample('Y').prod() - 1
+
+    # Ensure they are Series
+    mean_portfolio_annual_returns = mean_portfolio_annual_returns.squeeze()
+    msci_annual_returns_aligned = msci_annual_returns_aligned.squeeze()
+    spy_annual_returns_aligned = spy_annual_returns_aligned.squeeze()
 
     # Combine into a DataFrame
     annual_returns_mean_portfolio = pd.DataFrame({
