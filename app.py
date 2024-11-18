@@ -446,7 +446,7 @@ elif selected_section == 'Portfolio Construction':
     st.dataframe(weights_monthly.head().style.background_gradient(cmap='Blues'), use_container_width=True)
 
     # Align dates
-    common_index = portfolio_cum_returns.index.intersection(msci_world_cum_returns.index)
+    common_index = portfolio_cum_returns.index.intersection(msci_world_cum_returns.index).intersection(spy_cum_returns.index)
     portfolio_cum_returns = portfolio_cum_returns.loc[common_index]
     msci_world_cum_returns_aligned = msci_world_cum_returns.loc[common_index]
     spy_cum_returns_aligned = spy_cum_returns.loc[common_index]
@@ -577,9 +577,14 @@ elif selected_section == 'Portfolio Construction':
         lambda x: (x.mean() / x.std()) * np.sqrt(252), raw=False
     )
 
-    msci_rolling_sharpe = msci_world_returns.loc[portfolio_returns.index].rolling(window=window_size).apply(
+    msci_rolling_sharpe = msci_world_returns.reindex(portfolio_returns.index).rolling(window=window_size).apply(
         lambda x: (x.mean() / x.std()) * np.sqrt(252), raw=False
     )
+
+    # Align dates
+    common_index = portfolio_rolling_sharpe.dropna().index.intersection(msci_rolling_sharpe.dropna().index)
+    portfolio_rolling_sharpe = portfolio_rolling_sharpe.loc[common_index]
+    msci_rolling_sharpe = msci_rolling_sharpe.loc[common_index]
 
     # Plot rolling Sharpe Ratios
     fig = go.Figure()
@@ -613,6 +618,11 @@ elif selected_section == 'Portfolio Construction':
     # Calculate rolling drawdowns
     portfolio_drawdown = calculate_drawdown(portfolio_cum_returns)
     msci_drawdown = calculate_drawdown(msci_world_cum_returns_aligned)
+
+    # Align dates
+    common_index = portfolio_drawdown.index.intersection(msci_drawdown.index)
+    portfolio_drawdown = portfolio_drawdown.loc[common_index]
+    msci_drawdown = msci_drawdown.loc[common_index]
 
     # Plot rolling drawdowns
     fig = go.Figure()
@@ -736,7 +746,7 @@ elif selected_section == 'Mean Portfolio Evolution':
     mean_portfolio_cum_returns = (1 + mean_portfolio_returns).cumprod()
 
     # Align dates with benchmarks
-    common_index = mean_portfolio_cum_returns.index.intersection(msci_world_cum_returns.index)
+    common_index = mean_portfolio_cum_returns.index.intersection(msci_world_cum_returns.index).intersection(spy_cum_returns.index)
     mean_portfolio_cum_returns = mean_portfolio_cum_returns.loc[common_index]
     msci_world_cum_returns_aligned = msci_world_cum_returns.loc[common_index]
     spy_cum_returns_aligned = spy_cum_returns.loc[common_index]
@@ -807,9 +817,14 @@ elif selected_section == 'Mean Portfolio Evolution':
         lambda x: (x.mean() / x.std()) * np.sqrt(252), raw=False
     )
 
-    msci_rolling_sharpe_aligned = msci_world_returns.loc[mean_portfolio_returns.index].rolling(window=window_size).apply(
+    msci_rolling_sharpe_aligned = msci_world_returns.reindex(mean_portfolio_returns.index).rolling(window=window_size).apply(
         lambda x: (x.mean() / x.std()) * np.sqrt(252), raw=False
     )
+
+    # Align dates
+    common_index = mean_portfolio_rolling_sharpe.dropna().index.intersection(msci_rolling_sharpe_aligned.dropna().index)
+    mean_portfolio_rolling_sharpe = mean_portfolio_rolling_sharpe.loc[common_index]
+    msci_rolling_sharpe_aligned = msci_rolling_sharpe_aligned.loc[common_index]
 
     # Plot rolling Sharpe Ratios
     fig = go.Figure()
@@ -844,6 +859,11 @@ elif selected_section == 'Mean Portfolio Evolution':
     mean_portfolio_drawdown = calculate_drawdown(mean_portfolio_cum_returns)
     msci_drawdown_aligned = calculate_drawdown(msci_world_cum_returns_aligned)
 
+    # Align dates
+    common_index = mean_portfolio_drawdown.index.intersection(msci_drawdown_aligned.index)
+    mean_portfolio_drawdown = mean_portfolio_drawdown.loc[common_index]
+    msci_drawdown_aligned = msci_drawdown_aligned.loc[common_index]
+
     # Plot rolling drawdowns
     fig = go.Figure()
     fig.add_trace(go.Scatter(
@@ -876,8 +896,8 @@ elif selected_section == 'Mean Portfolio Evolution':
 
     # Calculate annual returns
     mean_portfolio_annual_returns = (1 + mean_portfolio_returns).resample('Y').prod() - 1
-    msci_annual_returns_aligned = (1 + msci_world_returns.loc[mean_portfolio_returns.index]).resample('Y').prod() - 1
-    spy_annual_returns_aligned = (1 + spy_returns.loc[mean_portfolio_returns.index]).resample('Y').prod() - 1
+    msci_annual_returns_aligned = (1 + msci_world_returns.reindex(mean_portfolio_returns.index)).resample('Y').prod() - 1
+    spy_annual_returns_aligned = (1 + spy_returns.reindex(mean_portfolio_returns.index)).resample('Y').prod() - 1
 
     # Ensure they are Series
     mean_portfolio_annual_returns = mean_portfolio_annual_returns.squeeze()
