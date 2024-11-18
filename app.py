@@ -335,21 +335,15 @@ portfolio_cum_returns = (1 + portfolio_returns).cumprod()
 
 # Download MSCI World ETF data
 msci_world = yf.download('URTH', start=portfolio_returns.index.min(), end=end_date)['Adj Close']
-msci_world = msci_world.fillna(method='ffill')
+msci_world = msci_world.fillna(method='ffill').dropna()
 msci_world.index = msci_world.index.tz_localize(None)
-
-# Reindex benchmark data to match portfolio data
-msci_world = msci_world.reindex(portfolio_cum_returns.index).fillna(method='ffill')
 msci_world_returns = msci_world.pct_change().fillna(0)
 msci_world_cum_returns = (1 + msci_world_returns).cumprod()
 
 # Download SPY ETF data
 spy = yf.download('SPY', start=portfolio_returns.index.min(), end=end_date)['Adj Close']
-spy = spy.fillna(method='ffill')
+spy = spy.fillna(method='ffill').dropna()
 spy.index = spy.index.tz_localize(None)
-
-# Reindex benchmark data to match portfolio data
-spy = spy.reindex(portfolio_cum_returns.index).fillna(method='ffill')
 spy_returns = spy.pct_change().fillna(0)
 spy_cum_returns = (1 + spy_returns).cumprod()
 
@@ -451,12 +445,18 @@ elif selected_section == 'Portfolio Construction':
     st.markdown('### Portfolio Weights Sample (Monthly Allocations)')
     st.dataframe(weights_monthly.head().style.background_gradient(cmap='Blues'), use_container_width=True)
 
+    # Align dates
+    common_index = portfolio_cum_returns.index.intersection(msci_world_cum_returns.index).intersection(spy_cum_returns.index)
+    portfolio_cum_returns_aligned = portfolio_cum_returns.loc[common_index]
+    msci_world_cum_returns_aligned = msci_world_cum_returns.loc[common_index]
+    spy_cum_returns_aligned = spy_cum_returns.loc[common_index]
+
     # Plot Portfolio vs. SPY and MSCI World ETF
     st.markdown('### Portfolio Performance vs. Benchmarks')
     fig = go.Figure()
-    fig.add_trace(go.Scatter(x=portfolio_cum_returns.index, y=portfolio_cum_returns, mode='lines', name='Dynamic Portfolio', line=dict(width=3)))
-    fig.add_trace(go.Scatter(x=msci_world_cum_returns.index, y=msci_world_cum_returns, mode='lines', name='MSCI World ETF (URTH)', line=dict(dash='dash', width=2)))
-    fig.add_trace(go.Scatter(x=spy_cum_returns.index, y=spy_cum_returns, mode='lines', name='SPY ETF', line=dict(dash='dot', width=2)))
+    fig.add_trace(go.Scatter(x=portfolio_cum_returns_aligned.index, y=portfolio_cum_returns_aligned, mode='lines', name='Dynamic Portfolio', line=dict(width=3)))
+    fig.add_trace(go.Scatter(x=spy_cum_returns_aligned.index, y=spy_cum_returns_aligned, mode='lines', name='SPY ETF', line=dict(dash='dash', width=2)))
+    fig.add_trace(go.Scatter(x=msci_world_cum_returns_aligned.index, y=msci_world_cum_returns_aligned, mode='lines', name='MSCI World ETF (URTH)', line=dict(dash='dot', width=2)))
     fig.update_layout(
         title='Portfolio Performance vs. SPY and MSCI World ETF',
         xaxis_title='Date',
@@ -574,15 +574,12 @@ elif selected_section == 'Portfolio Construction':
 
     # Calculate rolling Sharpe Ratios
     portfolio_rolling_sharpe = portfolio_returns.rolling(window=window_size).apply(
-        lambda x: (x.mean() / x.std()) * np.sqrt(252), raw=False
+        lambda x: (x.mean() / x.std()) * np.sqrt(252)
     )
 
-    msci_rolling_sharpe = msci_world_returns.rolling(window=window_size).apply(
-        lambda x: (x.mean() / x.std()) * np.sqrt(252), raw=False
+    msci_rolling_sharpe = msci_world_returns.loc[portfolio_returns.index].rolling(window=window_size).apply(
+        lambda x: (x.mean() / x.std()) * np.sqrt(252)
     )
-
-    # Align indices
-    msci_rolling_sharpe = msci_rolling_sharpe.reindex(portfolio_rolling_sharpe.index)
 
     # Plot rolling Sharpe Ratios
     fig = go.Figure()
@@ -615,10 +612,7 @@ elif selected_section == 'Portfolio Construction':
 
     # Calculate rolling drawdowns
     portfolio_drawdown = calculate_drawdown(portfolio_cum_returns)
-    msci_drawdown = calculate_drawdown(msci_world_cum_returns)
-
-    # Align indices
-    msci_drawdown = msci_drawdown.reindex(portfolio_drawdown.index)
+    msci_drawdown = calculate_drawdown(msci_world_cum_returns_aligned)
 
     # Plot rolling drawdowns
     fig = go.Figure()
@@ -741,16 +735,18 @@ elif selected_section == 'Mean Portfolio Evolution':
     # Calculate cumulative returns
     mean_portfolio_cum_returns = (1 + mean_portfolio_returns).cumprod()
 
-    # Reindex benchmark data to match mean portfolio data
-    msci_world_cum_returns_aligned = msci_world_cum_returns.reindex(mean_portfolio_cum_returns.index)
-    spy_cum_returns_aligned = spy_cum_returns.reindex(mean_portfolio_cum_returns.index)
+    # Align dates with benchmarks
+    common_index = mean_portfolio_cum_returns.index.intersection(msci_world_cum_returns.index).intersection(spy_cum_returns.index)
+    mean_portfolio_cum_returns_aligned = mean_portfolio_cum_returns.loc[common_index]
+    msci_world_cum_returns_aligned = msci_world_cum_returns.loc[common_index]
+    spy_cum_returns_aligned = spy_cum_returns.loc[common_index]
 
     # Plot Mean Portfolio vs. SPY and MSCI World ETF
     st.markdown('### Mean Portfolio Performance vs. Benchmarks')
     fig = go.Figure()
-    fig.add_trace(go.Scatter(x=mean_portfolio_cum_returns.index, y=mean_portfolio_cum_returns, mode='lines', name='Mean Portfolio', line=dict(width=3)))
-    fig.add_trace(go.Scatter(x=msci_world_cum_returns_aligned.index, y=msci_world_cum_returns_aligned, mode='lines', name='MSCI World ETF (URTH)', line=dict(dash='dash', width=2)))
-    fig.add_trace(go.Scatter(x=spy_cum_returns_aligned.index, y=spy_cum_returns_aligned, mode='lines', name='SPY ETF', line=dict(dash='dot', width=2)))
+    fig.add_trace(go.Scatter(x=mean_portfolio_cum_returns_aligned.index, y=mean_portfolio_cum_returns_aligned, mode='lines', name='Mean Portfolio', line=dict(width=3)))
+    fig.add_trace(go.Scatter(x=spy_cum_returns_aligned.index, y=spy_cum_returns_aligned, mode='lines', name='SPY ETF', line=dict(dash='dash', width=2)))
+    fig.add_trace(go.Scatter(x=msci_world_cum_returns_aligned.index, y=msci_world_cum_returns_aligned, mode='lines', name='MSCI World ETF (URTH)', line=dict(dash='dot', width=2)))
     fig.update_layout(
         title='Mean Portfolio Performance vs. SPY and MSCI World ETF',
         xaxis_title='Date',
@@ -808,15 +804,12 @@ elif selected_section == 'Mean Portfolio Evolution':
 
     # Calculate rolling Sharpe Ratios
     mean_portfolio_rolling_sharpe = mean_portfolio_returns.rolling(window=window_size).apply(
-        lambda x: (x.mean() / x.std()) * np.sqrt(252), raw=False
+        lambda x: (x.mean() / x.std()) * np.sqrt(252)
     )
 
-    msci_rolling_sharpe_aligned = msci_world_returns.rolling(window=window_size).apply(
-        lambda x: (x.mean() / x.std()) * np.sqrt(252), raw=False
+    msci_rolling_sharpe_aligned = msci_world_returns.loc[mean_portfolio_returns.index].rolling(window=window_size).apply(
+        lambda x: (x.mean() / x.std()) * np.sqrt(252)
     )
-
-    # Align indices
-    msci_rolling_sharpe_aligned = msci_rolling_sharpe_aligned.reindex(mean_portfolio_rolling_sharpe.index)
 
     # Plot rolling Sharpe Ratios
     fig = go.Figure()
@@ -848,7 +841,7 @@ elif selected_section == 'Mean Portfolio Evolution':
     ''')
 
     # Calculate rolling drawdowns
-    mean_portfolio_drawdown = calculate_drawdown(mean_portfolio_cum_returns)
+    mean_portfolio_drawdown = calculate_drawdown(mean_portfolio_cum_returns_aligned)
     msci_drawdown_aligned = calculate_drawdown(msci_world_cum_returns_aligned)
 
     # Plot rolling drawdowns
@@ -883,8 +876,8 @@ elif selected_section == 'Mean Portfolio Evolution':
 
     # Calculate annual returns
     mean_portfolio_annual_returns = (1 + mean_portfolio_returns).resample('Y').prod() - 1
-    msci_annual_returns_aligned = (1 + msci_world_returns).resample('Y').prod() - 1
-    spy_annual_returns_aligned = (1 + spy_returns).resample('Y').prod() - 1
+    msci_annual_returns_aligned = (1 + msci_world_returns.loc[mean_portfolio_returns.index]).resample('Y').prod() - 1
+    spy_annual_returns_aligned = (1 + spy_returns.loc[mean_portfolio_returns.index]).resample('Y').prod() - 1
 
     # Ensure they are Series
     mean_portfolio_annual_returns = mean_portfolio_annual_returns.squeeze()
