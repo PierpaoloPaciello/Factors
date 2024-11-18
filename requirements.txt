@@ -3,7 +3,6 @@ pandas
 numpy
 yfinance
 requests
-io
 datetime
 python-dateutil
 matplotlib
