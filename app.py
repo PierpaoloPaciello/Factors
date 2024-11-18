@@ -648,21 +648,28 @@ elif selected_section == 'Portfolio Construction':
     portfolio_annual_returns = portfolio_returns.resample('Y').apply(lambda x: (1 + x).prod() - 1)
     msci_annual_returns = msci_world_returns.resample('Y').apply(lambda x: (1 + x).prod() - 1)
     spy_annual_returns = spy_returns.resample('Y').apply(lambda x: (1 + x).prod() - 1)
-
+    
+    # Ensure they are Series
+    portfolio_annual_returns = portfolio_annual_returns.squeeze()
+    msci_annual_returns = msci_annual_returns.squeeze()
+    spy_annual_returns = spy_annual_returns.squeeze()
+    
+    # Set index name to 'Year' before resetting index
+    portfolio_annual_returns.index = portfolio_annual_returns.index.year
+    msci_annual_returns.index = msci_annual_returns.index.year
+    spy_annual_returns.index = spy_annual_returns.index.year
+    
     # Combine into a DataFrame
     annual_returns = pd.DataFrame({
         'Dynamic Portfolio': portfolio_annual_returns,
         'MSCI World ETF': msci_annual_returns,
         'SPY ETF': spy_annual_returns
     })
-
-    # Set index name to 'Year' before resetting index
-    annual_returns.index = annual_returns.index.year
+    
     annual_returns.index.name = 'Year'
-
+    
     # Melt for plotting
     annual_returns_melted = annual_returns.reset_index().melt(id_vars='Year', var_name='Portfolio', value_name='Annual Return')
-
     # Plot bar chart
     fig = px.bar(
         annual_returns_melted,
