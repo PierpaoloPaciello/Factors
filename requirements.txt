@@ -11,4 +11,3 @@ plotly
 scipy
 openpyxl
 xlrd
-io
