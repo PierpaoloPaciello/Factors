@@ -574,11 +574,11 @@ elif selected_section == 'Portfolio Construction':
 
     # Calculate rolling Sharpe Ratios
     portfolio_rolling_sharpe = portfolio_returns.rolling(window=window_size).apply(
-        lambda x: (x.mean() / x.std()) * np.sqrt(252)
+        lambda x: (x.mean() / x.std()) * np.sqrt(252), raw=False
     )
 
     msci_rolling_sharpe = msci_world_returns.loc[portfolio_returns.index].rolling(window=window_size).apply(
-        lambda x: (x.mean() / x.std()) * np.sqrt(252)
+        lambda x: (x.mean() / x.std()) * np.sqrt(252), raw=False
     )
 
     # Plot rolling Sharpe Ratios
@@ -645,9 +645,9 @@ elif selected_section == 'Portfolio Construction':
     ''')
 
     # Calculate annual returns
-    portfolio_annual_returns = portfolio_returns.resample('Y').apply(lambda x: (1 + x).prod() - 1)
-    msci_annual_returns = msci_world_returns.resample('Y').apply(lambda x: (1 + x).prod() - 1)
-    spy_annual_returns = spy_returns.resample('Y').apply(lambda x: (1 + x).prod() - 1)
+    portfolio_annual_returns = (1 + portfolio_returns).resample('Y').prod() - 1
+    msci_annual_returns = (1 + msci_world_returns).resample('Y').prod() - 1
+    spy_annual_returns = (1 + spy_returns).resample('Y').prod() - 1
 
     # Combine into a DataFrame
     annual_returns = pd.DataFrame({
@@ -799,11 +799,11 @@ elif selected_section == 'Mean Portfolio Evolution':
 
     # Calculate rolling Sharpe Ratios
     mean_portfolio_rolling_sharpe = mean_portfolio_returns.rolling(window=window_size).apply(
-        lambda x: (x.mean() / x.std()) * np.sqrt(252)
+        lambda x: (x.mean() / x.std()) * np.sqrt(252), raw=False
     )
 
     msci_rolling_sharpe_aligned = msci_world_returns.loc[mean_portfolio_returns.index].rolling(window=window_size).apply(
-        lambda x: (x.mean() / x.std()) * np.sqrt(252)
+        lambda x: (x.mean() / x.std()) * np.sqrt(252), raw=False
     )
 
     # Plot rolling Sharpe Ratios
@@ -870,9 +870,9 @@ elif selected_section == 'Mean Portfolio Evolution':
     ''')
 
     # Calculate annual returns
-    mean_portfolio_annual_returns = mean_portfolio_returns.resample('Y').apply(lambda x: (1 + x).prod() - 1)
-    msci_annual_returns_aligned = msci_world_returns.loc[mean_portfolio_returns.index].resample('Y').apply(lambda x: (1 + x).prod() - 1)
-    spy_annual_returns_aligned = spy_returns.loc[mean_portfolio_returns.index].resample('Y').apply(lambda x: (1 + x).prod() - 1)
+    mean_portfolio_annual_returns = (1 + mean_portfolio_returns).resample('Y').prod() - 1
+    msci_annual_returns_aligned = (1 + msci_world_returns.loc[mean_portfolio_returns.index]).resample('Y').prod() - 1
+    spy_annual_returns_aligned = (1 + spy_returns.loc[mean_portfolio_returns.index]).resample('Y').prod() - 1
 
     # Combine into a DataFrame
     annual_returns_mean_portfolio = pd.DataFrame({
