@@ -640,29 +640,41 @@ elif selected_section == 'Portfolio Construction':
     st.markdown('---')
     st.markdown('''
     ## Annual Percentage Returns
-
+    
     The bar chart below displays the annual percentage returns of the Dynamic Portfolio compared to the MSCI World ETF and SPY ETF.
     ''')
-
+    
     # Calculate annual returns
     portfolio_annual_returns = portfolio_returns.resample('Y').apply(lambda x: (1 + x).prod() - 1)
     msci_annual_returns = msci_world_returns.resample('Y').apply(lambda x: (1 + x).prod() - 1)
     spy_annual_returns = spy_returns.resample('Y').apply(lambda x: (1 + x).prod() - 1)
-
+    
+    # Ensure they are Series
+    portfolio_annual_returns = portfolio_annual_returns.squeeze()
+    msci_annual_returns = msci_annual_returns.squeeze()
+    spy_annual_returns = spy_annual_returns.squeeze()
+    
+    # Align indices
+    common_index = portfolio_annual_returns.index.intersection(msci_annual_returns.index).intersection(spy_annual_returns.index)
+    
+    portfolio_annual_returns = portfolio_annual_returns.loc[common_index]
+    msci_annual_returns = msci_annual_returns.loc[common_index]
+    spy_annual_returns = spy_annual_returns.loc[common_index]
+    
     # Combine into a DataFrame
     annual_returns = pd.DataFrame({
         'Dynamic Portfolio': portfolio_annual_returns,
         'MSCI World ETF': msci_annual_returns,
         'SPY ETF': spy_annual_returns
     })
-
+    
     # Set index name to 'Year' before resetting index
     annual_returns.index = annual_returns.index.year
     annual_returns.index.name = 'Year'
-
+    
     # Melt for plotting
     annual_returns_melted = annual_returns.reset_index().melt(id_vars='Year', var_name='Portfolio', value_name='Annual Return')
-
+    
     # Plot bar chart
     fig = px.bar(
         annual_returns_melted,
@@ -674,7 +686,7 @@ elif selected_section == 'Portfolio Construction':
         labels={'Annual Return': 'Annual Return (%)'},
         color_discrete_sequence=px.colors.qualitative.Set1
     )
-
+    
     fig.update_traces(texttemplate='%{text:.2%}', textposition='outside')
     fig.update_layout(
         title='Annual Percentage Returns',
@@ -685,7 +697,6 @@ elif selected_section == 'Portfolio Construction':
         font=dict(size=14)
     )
     st.plotly_chart(fig, use_container_width=True)
-
     # Conclusion
     st.markdown('---')
     st.markdown('''
