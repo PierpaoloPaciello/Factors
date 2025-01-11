@@ -206,7 +206,7 @@ end_date = datetime.datetime.today().strftime('%Y-%m-%d')
 
 @st.cache_data
 def get_etf_data(tickers, start_date, end_date):
-    data = yf.download(tickers, start=start_date, end=end_date)['Adj Close']
+    data = yf.download(tickers, start=start_date, end=end_date)['Close']
     return data
 
 with st.spinner('Fetching ETF data from Yahoo Finance...'):
@@ -334,14 +334,14 @@ portfolio_returns = (daily_returns * weights_df.shift(1)).sum(axis=1)
 portfolio_cum_returns = (1 + portfolio_returns).cumprod()
 
 # Download MSCI World ETF data
-msci_world = yf.download('URTH', start=portfolio_returns.index.min(), end=end_date)['Adj Close']
+msci_world = yf.download('URTH', start=portfolio_returns.index.min(), end=end_date)['Close']
 msci_world = msci_world.fillna(method='ffill').dropna()
 msci_world.index = msci_world.index.tz_localize(None)
 msci_world_returns = msci_world.pct_change().fillna(0)
 msci_world_cum_returns = (1 + msci_world_returns).cumprod()
 
 # Download SPY ETF data
-spy = yf.download('SPY', start=portfolio_returns.index.min(), end=end_date)['Adj Close']
+spy = yf.download('SPY', start=portfolio_returns.index.min(), end=end_date)['Close']
 spy = spy.fillna(method='ffill').dropna()
 spy.index = spy.index.tz_localize(None)
 spy_returns = spy.pct_change().fillna(0)
