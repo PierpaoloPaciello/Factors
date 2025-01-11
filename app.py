@@ -458,7 +458,7 @@ elif selected_section == 'Portfolio Construction':
     fig.add_trace(go.Scatter(x=spy_cum_returns_aligned.index, y=spy_cum_returns_aligned, mode='lines', name='SPY ETF', line=dict(dash='dash', width=2)))
     fig.add_trace(go.Scatter(x=msci_world_cum_returns_aligned.index, y=msci_world_cum_returns_aligned, mode='lines', name='MSCI World ETF (URTH)', line=dict(dash='dot', width=2)))
     fig.update_layout(
-        title='Portfolio Performance vs. SPY and MSCI World ETF',
+        title='Portfolio Performance',
         xaxis_title='Date',
         yaxis_title='Cumulative Returns',
         width=1200,
@@ -592,7 +592,7 @@ elif selected_section == 'Portfolio Construction':
         mode='lines', name='MSCI World ETF (URTH)', line=dict(color='red', dash='dash', width=2)
     ))
     fig.update_layout(
-        title='Rolling Sharpe Ratio Comparison',
+        title='Rolling Sharpe Ratio',
         xaxis_title='Date',
         yaxis_title='Rolling Sharpe Ratio',
         hovermode='x unified',
@@ -625,7 +625,7 @@ elif selected_section == 'Portfolio Construction':
         mode='lines', name='MSCI World ETF (URTH)', line=dict(color='red', dash='dash', width=2)
     ))
     fig.update_layout(
-        title='Rolling Drawdown Comparison',
+        title='Rolling Drawdown',
         xaxis_title='Date',
         yaxis_title='Drawdown',
         yaxis_tickformat='%',
@@ -693,11 +693,6 @@ elif selected_section == 'Portfolio Construction':
 
     # Conclusion
     st.markdown('---')
-    st.markdown('''
-    ## Conclusion
-
-    The Dynamic Portfolio Strategy demonstrates the effectiveness of aligning factor-based investments with macroeconomic phases. By dynamically adjusting allocations, the strategy achieves superior returns and risk management compared to traditional benchmarks.
-    ''')
 
 elif selected_section == 'Mean Portfolio Evolution':
     st.markdown('---')
@@ -748,7 +743,7 @@ elif selected_section == 'Mean Portfolio Evolution':
     fig.add_trace(go.Scatter(x=spy_cum_returns_aligned.index, y=spy_cum_returns_aligned, mode='lines', name='SPY ETF', line=dict(dash='dash', width=2)))
     fig.add_trace(go.Scatter(x=msci_world_cum_returns_aligned.index, y=msci_world_cum_returns_aligned, mode='lines', name='MSCI World ETF (URTH)', line=dict(dash='dot', width=2)))
     fig.update_layout(
-        title='Mean Portfolio Performance vs. SPY and MSCI World ETF',
+        title='Mean Portfolio Performance',
         xaxis_title='Date',
         yaxis_title='Cumulative Returns',
         width=1200,
@@ -837,7 +832,7 @@ elif selected_section == 'Mean Portfolio Evolution':
     st.markdown('''
     ## Rolling Drawdown Comparison
 
-    This section compares the rolling drawdowns of the Mean Portfolio and the MSCI World ETF.
+    This section shows the rolling drawdown of the Mean Portfolio.
     ''')
 
     # Calculate rolling drawdowns
@@ -855,7 +850,7 @@ elif selected_section == 'Mean Portfolio Evolution':
         mode='lines', name='MSCI World ETF (URTH)', line=dict(color='red', dash='dash', width=2)
     ))
     fig.update_layout(
-        title='Rolling Drawdown Comparison',
+        title='Rolling Drawdown',
         xaxis_title='Date',
         yaxis_title='Drawdown',
         yaxis_tickformat='%',
@@ -923,8 +918,3 @@ elif selected_section == 'Mean Portfolio Evolution':
 
     # Conclusion
     st.markdown('---')
-    st.markdown('''
-    ## Conclusion
-
-    The Mean Portfolio provides insights into how a consistent allocation strategy performs over time. By evolving the allocation based on the cumulative average weights of the dynamic strategy, the Mean Portfolio offers an alternative perspective compared to the dynamic approach.
-    ''')
