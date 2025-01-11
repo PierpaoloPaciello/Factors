@@ -64,7 +64,7 @@ st.markdown(
 )
 
 # Title and Introduction
-st.title('📈 Factor Investing: Adapting to Economic Phases')
+st.title('Factor Investing: Adapting to Economic Phases')
 
 st.markdown('''
 ## Introduction
@@ -78,8 +78,7 @@ Using the **OECD CLI Diffusion Index** as a macroeconomic indicator, this strate
 - **Contraction**: Widespread economic decline.
 
 By aligning factor-based ETFs with these phases, the strategy seeks to:
-1. Outperform traditional benchmarks like the MSCI World ETF (URTH) and SPY (S&P 500 ETF).
-2. Achieve superior risk-adjusted returns.
+1. Outperform benchmarks (MSCI World ETF (URTH), SPY (S&P 500 ETF)).
 3. Minimize drawdowns during adverse market conditions.
 
 The analysis evaluates this strategy’s performance, highlighting its ability to leverage factors such as Momentum, Quality, and Low Volatility across economic cycles.
@@ -379,19 +378,43 @@ if selected_section == 'Methodology':
     ''')
 
     st.markdown('### Economic Phases Data')
-    st.dataframe(pivot_data[['DI', 'DI_change', 'DI_direction', 'Phase']].tail(15).style.background_gradient(cmap='Blues'), use_container_width=True)
+    st.dataframe(pivot_data[['DI', 'DI_change', 'Phase']].tail(15).style.background_gradient(cmap='Blues'), use_container_width=True)
 
     # Plot the Diffusion Index
     st.markdown('### OECD CLI Diffusion Index')
-    fig, ax = plt.subplots(figsize=(16, 6))
-    ax.plot(pivot_data.index, pivot_data['DI'], label='Diffusion Index', color='#1f4e79', linewidth=2)
-    ax.axhline(0.5, color='red', linestyle='--', label='Threshold (0.5)')
-    ax.set_title('OECD CLI Diffusion Index', fontsize=18, color='#1f4e79')
-    ax.set_xlabel('Date', fontsize=14)
-    ax.set_ylabel('Diffusion Index', fontsize=14)
-    ax.legend()
-    ax.grid(True)
-    st.pyplot(fig)
+    
+    fig = go.Figure()
+    
+    fig.add_trace(
+        go.Scatter(
+            x=pivot_data.index,
+            y=pivot_data['DI'],
+            mode='lines',
+            name='Diffusion Index',
+            line=dict(color='#1f4e79', width=2)
+        )
+    )
+    
+    # Add a horizontal line at 0.5
+    fig.add_hline(
+        y=0.5,
+        line_dash='dash',
+        line_color='red',
+        annotation_text='Threshold (0.5)',
+        annotation_position='top left'
+    )
+    
+    fig.update_layout(
+        title='OECD CLI Diffusion Index',
+        xaxis_title='Date',
+        yaxis_title='Diffusion Index',
+        font=dict(size=14),
+        hovermode='x unified', 
+        legend=dict(x=0.01, y=0.99)
+    )
+    
+    # Display the chart in Streamlit
+    st.plotly_chart(fig, use_container_width=True)
 
 elif selected_section == 'Portfolio Construction':
     st.markdown('---')
