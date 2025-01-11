@@ -465,8 +465,8 @@ elif selected_section == 'Portfolio Construction':
     # Resample weights to monthly frequency
     weights_monthly = weights_df.resample('M').first()
 
-    st.markdown('### Portfolio Weights Sample (Monthly Allocations)')
-    st.dataframe(weights_monthly.head().style.background_gradient(cmap='Blues'), use_container_width=True)
+    st.markdown('### Last Portfolio Weights')
+    st.dataframe(weights_monthly.tail().style.background_gradient(cmap='Blues'), use_container_width=True)
 
     # Align dates
     common_index = portfolio_cum_returns.index.intersection(msci_world_cum_returns.index).intersection(spy_cum_returns.index)
