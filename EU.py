@@ -1,4 +1,5 @@
-import streamlit as st
+## -> change to stoxx 50 instead of msci world and change occurrencies and titles.##
+import streamlit as st 
 import pandas as pd
 import numpy as np
 import yfinance as yf
@@ -297,7 +298,7 @@ stoxx600_returns = stoxx600.pct_change().fillna(0)
 stoxx600_cum_returns = (1 + stoxx600_returns).cumprod()
 
 # MSCI World
-msci_world = yf.download('URTH', start=portfolio_returns.index.min(), end=end_date)['Close']
+msci_world = yf.download('LYP6.DE', start=portfolio_returns.index.min(), end=end_date)['Close']
 msci_world.fillna(method='ffill', inplace=True)
 msci_world.dropna(inplace=True)
 msci_world.index = msci_world.index.tz_localize(None)
