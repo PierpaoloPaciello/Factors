@@ -196,7 +196,7 @@ end_date = datetime.datetime.today().strftime('%Y-%m-%d')
 
 @st.cache_data
 def get_etf_data(tickers, start_date, end_date):
-    data = yf.download(tickers, start=start_date, end=end_date)['Adj Close']
+    data = yf.download(tickers, start=start_date, end=end_date)['Close']
     return data
 
 with st.spinner('Fetching ETF data from Yahoo Finance...'):
