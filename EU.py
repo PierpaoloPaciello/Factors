@@ -160,7 +160,7 @@ end_date = datetime.datetime.today().strftime('%Y-%m-%d')
 
 @st.cache_data
 def get_etf_data(tickers, start_date, end_date):
-    data = yf.download(tickers, start=start_date, end=end_date)['Adj Close']
+    data = yf.download(tickers, start=start_date, end=end_date)['Close']
     return data
 
 with st.spinner('Fetching ETF data from Yahoo Finance...'):
@@ -250,14 +250,14 @@ portfolio_returns = (daily_returns * weights_df.shift(1)).sum(axis=1)
 portfolio_cum_returns = (1 + portfolio_returns).cumprod()
 
 # --- Benchmark 1: STOXX 600 (XSX6.MI) ---
-STOXX_600 = yf.download('XSX6.MI', start=portfolio_returns.index.min(), end=end_date)['Adj Close']
+STOXX_600 = yf.download('XSX6.MI', start=portfolio_returns.index.min(), end=end_date)['Close']
 STOXX_600 = STOXX_600.fillna(method='ffill').dropna()
 STOXX_600.index = STOXX_600.index.tz_localize(None)
 STOXX_600_returns = STOXX_600.pct_change().fillna(0)
 STOXX_600_cum_returns = (1 + STOXX_600_returns).cumprod()
 
 # --- Benchmark 2: MSCI World (URTH) ---
-MSCI_W = yf.download('URTH', start=portfolio_returns.index.min(), end=end_date)['Adj Close']
+MSCI_W = yf.download('URTH', start=portfolio_returns.index.min(), end=end_date)['Close']
 MSCI_W = MSCI_W.fillna(method='ffill').dropna()
 MSCI_W.index = MSCI_W.index.tz_localize(None)
 MSCI_W_returns = MSCI_W.pct_change().fillna(0)
