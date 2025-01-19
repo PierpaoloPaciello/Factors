@@ -1,4 +1,4 @@
-## -> change to stoxx 50 instead of msci world and change occurrencies and titles.##
+## -> change to stoxx 50 instead of Stoxx 50 and change occurrencies and titles.##
 import streamlit as st 
 import pandas as pd
 import numpy as np
@@ -79,7 +79,7 @@ Using the **OECD CLI Diffusion Index** as a macroeconomic indicator, this strate
 - **Contraction**: Widespread economic decline.
 
 By aligning factor-based ETFs with these phases, the strategy seeks to:
-1. Outperform benchmarks (STOXX 600, MSCI World).
+1. Outperform benchmarks (STOXX 600, STOXX 50).
 2. Minimize drawdowns during adverse market conditions.
 
 The analysis evaluates this strategy’s performance, highlighting its ability to leverage factors such as Value, Quality, Momentum, and Low Volatility across economic cycles.
@@ -297,26 +297,26 @@ stoxx600.index = stoxx600.index.tz_localize(None)
 stoxx600_returns = stoxx600.pct_change().fillna(0)
 stoxx600_cum_returns = (1 + stoxx600_returns).cumprod()
 
-# MSCI World
-msci_world = yf.download('XESC.DE', start=portfolio_returns.index.min(), end=end_date)['Close']
-msci_world.fillna(method='ffill', inplace=True)
-msci_world.dropna(inplace=True)
-msci_world.index = msci_world.index.tz_localize(None)
-msci_world_returns = msci_world.pct_change().fillna(0)
-msci_world_cum_returns = (1 + msci_world_returns).cumprod()
+# Stoxx 50 
+stoxx_50 = yf.download('XESC.DE', start=portfolio_returns.index.min(), end=end_date)['Close']
+stoxx_50.fillna(method='ffill', inplace=True)
+stoxx_50.dropna(inplace=True)
+stoxx_50.index = stoxx_50.index.tz_localize(None)
+stoxx_50_returns = stoxx_50.pct_change().fillna(0)
+stoxx_50_cum_returns = (1 + stoxx_50_returns).cumprod()
 
 # Align indexes
 common_idx = portfolio_cum_returns.index \
     .intersection(stoxx600_cum_returns.index) \
-    .intersection(msci_world_cum_returns.index)
+    .intersection(stoxx_50_cum_returns.index)
 
 portfolio_cum_returns_aligned   = portfolio_cum_returns.loc[common_idx]
 stoxx600_cum_returns_aligned    = stoxx600_cum_returns.loc[common_idx]
-msci_world_cum_returns_aligned  = msci_world_cum_returns.loc[common_idx]
+stoxx_50_cum_returns_aligned  = stoxx_50_cum_returns.loc[common_idx]
 
 portfolio_returns_aligned  = portfolio_returns.loc[common_idx]
 stoxx600_returns_aligned   = stoxx600_returns.loc[common_idx]
-msci_world_returns_aligned = msci_world_returns.loc[common_idx]
+stoxx_50_returns_aligned = stoxx_50_returns.loc[common_idx]
 
 window_size = 252
 def calculate_drawdown(cumulative_returns):
@@ -342,7 +342,7 @@ if selected_section == 'Methodology':
        - Top 3 by cumulative return in each phase → equal weights.
 
     3. **Benchmarks**:
-       - STOXX 600 (XSX6.MI) and MSCI World (URTH).
+       - STOXX 600 (XSX6.MI) and Stoxx 50  .
     ''')
 
     st.markdown('### Economic Phases Data')
@@ -390,7 +390,7 @@ elif selected_section == 'Portfolio Construction':
     st.dataframe(weights_monthly.tail().style.background_gradient(cmap='Blues'), use_container_width=True)
 
     # Portfolio vs. Benchmarks
-    st.markdown('### Portfolio Performance vs. STOXX 600 & MSCI World')
+    st.markdown('### Portfolio Performance vs. STOXX 600 & Stoxx 50')
     fig = go.Figure()
     fig.add_trace(go.Scatter(
         x=portfolio_cum_returns_aligned.index,
@@ -407,10 +407,10 @@ elif selected_section == 'Portfolio Construction':
         line=dict(dash='dash', width=2)
     ))
     fig.add_trace(go.Scatter(
-        x=msci_world_cum_returns_aligned.index,
-        y=msci_world_cum_returns_aligned,
+        x=stoxx_50_cum_returns_aligned.index,
+        y=stoxx_50_cum_returns_aligned,
         mode='lines',
-        name='MSCI World (URTH)',
+        name='Stoxx 50  ',
         line=dict(dash='dot', width=2)
     ))
     fig.update_layout(
@@ -493,7 +493,7 @@ elif selected_section == 'Portfolio Construction':
     portfolio_rolling_sharpe = portfolio_returns_aligned.rolling(window_size).apply(
         lambda x: (x.mean() / x.std()) * np.sqrt(252) if x.std()!=0 else np.nan
     )
-    msci_rolling_sharpe = msci_world_returns_aligned.rolling(window_size).apply(
+    msci_rolling_sharpe = stoxx_50_returns_aligned.rolling(window_size).apply(
         lambda x: (x.mean() / x.std()) * np.sqrt(252) if x.std()!=0 else np.nan
     )
 
@@ -504,7 +504,7 @@ elif selected_section == 'Portfolio Construction':
     ))
     fig.add_trace(go.Scatter(
         x=msci_rolling_sharpe.index, y=msci_rolling_sharpe,
-        mode='lines', name='MSCI World (URTH)', line=dict(dash='dash')
+        mode='lines', name='Stoxx 50  ', line=dict(dash='dash')
     ))
     fig.update_layout(
         title='Rolling Sharpe Ratio',
@@ -521,7 +521,7 @@ elif selected_section == 'Portfolio Construction':
     st.markdown('---')
     st.markdown('## Rolling Drawdown Comparison')
     portfolio_drawdown = calculate_drawdown(portfolio_cum_returns_aligned)
-    msci_drawdown      = calculate_drawdown(msci_world_cum_returns_aligned)
+    msci_drawdown      = calculate_drawdown(stoxx_50_cum_returns_aligned)
 
     fig = go.Figure()
     fig.add_trace(go.Scatter(
@@ -530,7 +530,7 @@ elif selected_section == 'Portfolio Construction':
     ))
     fig.add_trace(go.Scatter(
         x=msci_drawdown.index, y=msci_drawdown,
-        mode='lines', name='MSCI World (URTH)', line=dict(dash='dash')
+        mode='lines', name='Stoxx 50  ', line=dict(dash='dash')
     ))
     fig.update_layout(
         title='Rolling Drawdown',
@@ -549,7 +549,7 @@ elif selected_section == 'Portfolio Construction':
     st.markdown('## Annual Percentage Returns')
 
     portfolio_annual_returns = (1 + portfolio_returns_aligned).resample('Y').prod() - 1
-    msci_annual_returns      = (1 + msci_world_returns_aligned).resample('Y').prod() - 1
+    msci_annual_returns      = (1 + stoxx_50_returns_aligned).resample('Y').prod() - 1
     stoxx_annual_returns     = (1 + stoxx600_returns_aligned).resample('Y').prod() - 1
 
     # Squeeze to ensure 1D
@@ -562,7 +562,7 @@ elif selected_section == 'Portfolio Construction':
 
     annual_returns_df = pd.DataFrame({
         'Dynamic Portfolio': portfolio_annual_returns,
-        'MSCI World (URTH)': msci_annual_returns,
+        'Stoxx 50  ': msci_annual_returns,
         'STOXX 600 (XSX6.MI)': stoxx_annual_returns
     })
     annual_returns_df.index = annual_returns_df.index.year
@@ -611,12 +611,12 @@ elif selected_section == 'Mean Portfolio Evolution':
     # Align
     mean_common_idx = mean_portfolio_cum_returns.index \
         .intersection(stoxx600_cum_returns.index) \
-        .intersection(msci_world_cum_returns.index)
+        .intersection(stoxx_50_cum_returns.index)
     mean_cum_returns_aligned  = mean_portfolio_cum_returns.loc[mean_common_idx]
     stoxx_cum_aligned         = stoxx600_cum_returns.loc[mean_common_idx]
-    msci_cum_aligned          = msci_world_cum_returns.loc[mean_common_idx]
+    msci_cum_aligned          = stoxx_50_cum_returns.loc[mean_common_idx]
 
-    st.markdown('### Mean Portfolio vs. STOXX 600 & MSCI World')
+    st.markdown('### Mean Portfolio vs. STOXX 600 & Stoxx 50')
     fig_mean = go.Figure()
     fig_mean.add_trace(go.Scatter(
         x=mean_cum_returns_aligned.index,
@@ -635,7 +635,7 @@ elif selected_section == 'Mean Portfolio Evolution':
         x=msci_cum_aligned.index,
         y=msci_cum_aligned,
         mode='lines',
-        name='MSCI World',
+        name='Stoxx 50',
         line=dict(dash='dot')
     ))
     fig_mean.update_layout(
@@ -667,7 +667,7 @@ elif selected_section == 'Mean Portfolio Evolution':
     st.markdown('## Rolling Sharpe Ratio (Mean Portfolio)')
 
     mean_returns_aligned = mean_portfolio_returns.loc[mean_common_idx]
-    msci_returns_aligned = msci_world_returns.loc[mean_common_idx]
+    msci_returns_aligned = stoxx_50_returns.loc[mean_common_idx]
 
     mean_rolling_sharpe = mean_returns_aligned.rolling(window_size).apply(
         lambda x: (x.mean()/x.std())*np.sqrt(252) if x.std()!=0 else np.nan
@@ -683,7 +683,7 @@ elif selected_section == 'Mean Portfolio Evolution':
     ))
     fig_sharpe.add_trace(go.Scatter(
         x=msci_rolling_sharpe_mean.index, y=msci_rolling_sharpe_mean,
-        mode='lines', name='MSCI World', line=dict(dash='dash')
+        mode='lines', name='Stoxx 50', line=dict(dash='dash')
     ))
     fig_sharpe.update_layout(
         title='Rolling Sharpe Ratio (Mean Portfolio)',
@@ -709,7 +709,7 @@ elif selected_section == 'Mean Portfolio Evolution':
     ))
     fig_dd.add_trace(go.Scatter(
         x=msci_drawdown_mean.index, y=msci_drawdown_mean,
-        mode='lines', name='MSCI World', line=dict(dash='dash')
+        mode='lines', name='Stoxx 50', line=dict(dash='dash')
     ))
     fig_dd.update_layout(
         title='Rolling Drawdown (Mean Portfolio)',
@@ -728,7 +728,7 @@ elif selected_section == 'Mean Portfolio Evolution':
 
     mean_annual_ret = (1 + mean_returns_aligned).resample('Y').prod() - 1
     stoxx_annual_ret = (1 + stoxx600_returns.loc[mean_common_idx]).resample('Y').prod() - 1
-    msci_annual_ret  = (1 + msci_world_returns.loc[mean_common_idx]).resample('Y').prod() - 1
+    msci_annual_ret  = (1 + stoxx_50_returns.loc[mean_common_idx]).resample('Y').prod() - 1
 
     if isinstance(mean_annual_ret, pd.DataFrame):
         mean_annual_ret = mean_annual_ret.iloc[:,0]
@@ -740,7 +740,7 @@ elif selected_section == 'Mean Portfolio Evolution':
     df_annual_mean = pd.DataFrame({
         'Mean Portfolio': mean_annual_ret,
         'STOXX 600': stoxx_annual_ret,
-        'MSCI World': msci_annual_ret
+        'Stoxx 50': msci_annual_ret
     })
     df_annual_mean.index = df_annual_mean.index.year
     df_annual_mean.index.name='Year'
