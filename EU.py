@@ -1,4 +1,3 @@
-## -> change to stoxx 50 instead of Stoxx 50 and change occurrencies and titles.##
 import streamlit as st 
 import pandas as pd
 import numpy as np
@@ -13,12 +12,9 @@ import seaborn as sns
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import plotly.express as px
-
-# Suppress warnings
 import warnings
 warnings.filterwarnings('ignore')
 
-# Set page configuration with custom theme
 st.set_page_config(
     layout="wide",
     page_title='Dynamic Portfolio Strategy (Europe)',
@@ -26,7 +22,6 @@ st.set_page_config(
     initial_sidebar_state='expanded'
 )
 
-# Apply custom CSS for fonts and backgrounds
 st.markdown(
     """
     <style>
@@ -64,11 +59,9 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# Title and Introduction
-st.title('Factor Investing: Adapting to Economic Phases (Europe Version)')
+st.title('Factor Investing: Adapting to Economic Phases Europe')
 
 st.markdown('''
-## Introduction
 
 This app presents the **Dynamic Portfolio Strategy (European)**, an approach designed to optimize returns by dynamically allocating assets based on economic phases.
 
@@ -330,7 +323,7 @@ if selected_section == 'Methodology':
     st.markdown('''
     ## Methodology
 
-    1. **OECD CLI Data (Shifted 1 Month)**:
+    1. **OECD CLI Data**:
        - The Diffusion Index (DI) is calculated monthly to categorize phases:
          - **Recovery**: DI < 0.5 & Rising
          - **Expansion**: DI ≥ 0.5 & Rising
@@ -348,7 +341,7 @@ if selected_section == 'Methodology':
     st.markdown('### Economic Phases Data')
     st.dataframe(pivot_data[['DI','DI_change','Phase']].tail(15).style.background_gradient(cmap='Blues'), use_container_width=True)
 
-    st.markdown('### OECD CLI Diffusion Index (Shifted)')
+    #st.markdown('### OECD CLI Diffusion Index')
     fig = go.Figure()
     fig.add_trace(go.Scatter(
         x=pivot_data.index, y=pivot_data['DI'], 
@@ -366,31 +359,28 @@ if selected_section == 'Methodology':
 
 elif selected_section == 'Portfolio Construction':
     st.markdown('---')
-    st.markdown('## Factor Performance by Phase')
+    #st.markdown('## Factor Performance by Phase')
 
-    # Display factor performance table
     st.markdown('### Factor Performance Data')
     st.dataframe(factor_performance.style.background_gradient(cmap='Blues'), use_container_width=True)
 
     # Heatmap
-    st.markdown('### Factor Performance Heatmap')
-    factor_performance_t = factor_performance.T
-    plt.figure(figsize=(10, 6))
-    sns.heatmap(factor_performance_t*100, annot=True, fmt='.2f', cmap='Blues', cbar_kws={'label': 'Return (%)'})
-    st.pyplot(plt.gcf())
+    #st.markdown('### Factor Performance Heatmap')
+    #factor_performance_t = factor_performance.T
+    #plt.figure(figsize=(10, 6))
+    #sns.heatmap(factor_performance_t*100, annot=True, fmt='.2f', cmap='Blues', cbar_kws={'label': 'Return (%)'})
+    #st.pyplot(plt.gcf())
 
     st.markdown('---')
     st.markdown('### Top 3 ETFs per Phase')
     for ph in unique_phases:
         st.write(f"**{ph}**: {best_etfs_per_phase.get(ph, [])}")
 
-    # Last Portfolio Weights
     weights_monthly = weights_df.resample('M').first()
-    st.markdown('### Last Portfolio Weights (Monthly)')
+    #st.markdown('### Last Portfolio Weights')
     st.dataframe(weights_monthly.tail().style.background_gradient(cmap='Blues'), use_container_width=True)
 
-    # Portfolio vs. Benchmarks
-    st.markdown('### Portfolio Performance vs. STOXX 600 & Stoxx 50')
+    #st.markdown('### Portfolio Performance vs. STOXX 600 & Stoxx 50')
     fig = go.Figure()
     fig.add_trace(go.Scatter(
         x=portfolio_cum_returns_aligned.index,
@@ -488,7 +478,7 @@ elif selected_section == 'Portfolio Construction':
 
     # Rolling Sharpe Ratio
     st.markdown('---')
-    st.markdown('## Rolling Sharpe Ratio Comparison')
+    #st.markdown('## Rolling Sharpe Ratio Comparison')
 
     portfolio_rolling_sharpe = portfolio_returns_aligned.rolling(window_size).apply(
         lambda x: (x.mean() / x.std()) * np.sqrt(252) if x.std()!=0 else np.nan
@@ -519,7 +509,7 @@ elif selected_section == 'Portfolio Construction':
 
     # Rolling Drawdown
     st.markdown('---')
-    st.markdown('## Rolling Drawdown Comparison')
+    #st.markdown('## Rolling Drawdown Comparison')
     portfolio_drawdown = calculate_drawdown(portfolio_cum_returns_aligned)
     msci_drawdown      = calculate_drawdown(stoxx_50_cum_returns_aligned)
 
@@ -546,7 +536,7 @@ elif selected_section == 'Portfolio Construction':
 
     # Annual Percentage Returns
     st.markdown('---')
-    st.markdown('## Annual Percentage Returns')
+    #st.markdown('## Annual Percentage Returns')
 
     portfolio_annual_returns = (1 + portfolio_returns_aligned).resample('Y').prod() - 1
     msci_annual_returns      = (1 + stoxx_50_returns_aligned).resample('Y').prod() - 1
@@ -594,7 +584,7 @@ elif selected_section == 'Portfolio Construction':
 
 elif selected_section == 'Mean Portfolio Evolution':
     st.markdown('---')
-    st.markdown('## Mean Portfolio Evolution')
+    #st.markdown('## Mean Portfolio Evolution')
 
     weights_monthly = weights_df.resample('M').first()
     mean_weights_monthly = pd.DataFrame(index=weights_monthly.index, columns=weights_monthly.columns)
@@ -616,7 +606,7 @@ elif selected_section == 'Mean Portfolio Evolution':
     stoxx_cum_aligned         = stoxx600_cum_returns.loc[mean_common_idx]
     msci_cum_aligned          = stoxx_50_cum_returns.loc[mean_common_idx]
 
-    st.markdown('### Mean Portfolio vs. STOXX 600 & Stoxx 50')
+    #st.markdown('### Mean Portfolio vs. STOXX 600 & Stoxx 50')
     fig_mean = go.Figure()
     fig_mean.add_trace(go.Scatter(
         x=mean_cum_returns_aligned.index,
@@ -648,7 +638,7 @@ elif selected_section == 'Mean Portfolio Evolution':
     )
     st.plotly_chart(fig_mean, use_container_width=True)
 
-    st.markdown('### Mean Portfolio Weights Sample (Monthly)')
+    st.markdown('### Last Mean Portfolio Weights')
     st.dataframe(mean_weights_monthly.tail().style.background_gradient(cmap='Blues'), use_container_width=True)
 
     fig_allocation = make_subplots(rows=1, cols=1, subplot_titles=['Evolving Mean Portfolio Allocations'])
@@ -664,7 +654,7 @@ elif selected_section == 'Mean Portfolio Evolution':
     st.plotly_chart(fig_allocation, use_container_width=True)
 
     st.markdown('---')
-    st.markdown('## Rolling Sharpe Ratio (Mean Portfolio)')
+    #st.markdown('## Rolling Sharpe Ratio (Mean Portfolio)')
 
     mean_returns_aligned = mean_portfolio_returns.loc[mean_common_idx]
     msci_returns_aligned = stoxx_50_returns.loc[mean_common_idx]
@@ -686,7 +676,7 @@ elif selected_section == 'Mean Portfolio Evolution':
         mode='lines', name='Stoxx 50', line=dict(dash='dash')
     ))
     fig_sharpe.update_layout(
-        title='Rolling Sharpe Ratio (Mean Portfolio)',
+        title='Rolling Sharpe Ratio Mean Portfolio',
         xaxis_title='Date',
         yaxis_title='Sharpe Ratio',
         hovermode='x unified',
@@ -697,7 +687,7 @@ elif selected_section == 'Mean Portfolio Evolution':
     st.plotly_chart(fig_sharpe, use_container_width=True)
 
     st.markdown('---')
-    st.markdown('## Rolling Drawdown (Mean Portfolio)')
+    #st.markdown('## Rolling Drawdown (Mean Portfolio)')
 
     mean_drawdown = calculate_drawdown(mean_cum_returns_aligned)
     msci_drawdown_mean = calculate_drawdown(msci_cum_aligned)
@@ -712,7 +702,7 @@ elif selected_section == 'Mean Portfolio Evolution':
         mode='lines', name='Stoxx 50', line=dict(dash='dash')
     ))
     fig_dd.update_layout(
-        title='Rolling Drawdown (Mean Portfolio)',
+        title='Rolling Drawdown Mean Portfolio',
         xaxis_title='Date',
         yaxis_title='Drawdown',
         yaxis_tickformat='%',
@@ -724,7 +714,7 @@ elif selected_section == 'Mean Portfolio Evolution':
     st.plotly_chart(fig_dd, use_container_width=True)
 
     st.markdown('---')
-    st.markdown('## Annual Percentage Returns (Mean Portfolio)')
+    #st.markdown('## Annual Percentage Returns (Mean Portfolio)')
 
     mean_annual_ret = (1 + mean_returns_aligned).resample('Y').prod() - 1
     stoxx_annual_ret = (1 + stoxx600_returns.loc[mean_common_idx]).resample('Y').prod() - 1
@@ -756,7 +746,7 @@ elif selected_section == 'Mean Portfolio Evolution':
     )
     fig_bar2.update_traces(texttemplate='%{text:.2%}', textposition='outside')
     fig_bar2.update_layout(
-        title='Annual Percentage Returns (Mean Portfolio)',
+        title='Annual Percentage Returns Mean Portfolio',
         yaxis_tickformat='%',
         xaxis=dict(type='category'),
         font=dict(size=14),
