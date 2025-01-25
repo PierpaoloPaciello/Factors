@@ -380,12 +380,10 @@ elif selected_section == 'Portfolio Construction':
     #st.markdown('### Last Portfolio Weights')
     st.dataframe(weights_monthly.tail().style.background_gradient(cmap='Blues'), use_container_width=True)
 #####################
-    # Check data shape:
-    st.write("Portfolio shape:", portfolio_cum_returns_aligned.shape)
-    st.write("STOXX 600 shape:", stoxx600_cum_returns_aligned.shape)
-    st.write("Stoxx 50 shape:", stoxx_50_cum_returns_aligned.shape)
+    # Flatten each benchmark DataFrame to a Series
+    stoxx600_cum_returns_aligned = stoxx600_cum_returns_aligned.squeeze()
+    stoxx_50_cum_returns_aligned = stoxx_50_cum_returns_aligned.squeeze()
     
-    # Plotly chart
     fig = go.Figure()
     fig.add_trace(go.Scatter(
         x=portfolio_cum_returns_aligned.index,
@@ -411,14 +409,8 @@ elif selected_section == 'Portfolio Construction':
     fig.update_layout(
         title='Portfolio Performance',
         xaxis_title='Date',
-        yaxis_title='Cumulative Returns',
-        width=1100,
-        height=600,
-        font=dict(size=14),
-        # Ensure the legend or hovermode is standard:
-        hovermode='x unified'
+        yaxis_title='Cumulative Returns'
     )
-    
     st.plotly_chart(fig, use_container_width=True)
 #####################
 
