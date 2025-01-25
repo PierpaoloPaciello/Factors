@@ -379,29 +379,34 @@ elif selected_section == 'Portfolio Construction':
     weights_monthly = weights_df.resample('M').first()
     #st.markdown('### Last Portfolio Weights')
     st.dataframe(weights_monthly.tail().style.background_gradient(cmap='Blues'), use_container_width=True)
-
-    #st.markdown('### Portfolio Performance vs. STOXX 600 & Stoxx 50')
+#####################
+    # Check data shape:
+    st.write("Portfolio shape:", portfolio_cum_returns_aligned.shape)
+    st.write("STOXX 600 shape:", stoxx600_cum_returns_aligned.shape)
+    st.write("Stoxx 50 shape:", stoxx_50_cum_returns_aligned.shape)
+    
+    # Plotly chart
     fig = go.Figure()
     fig.add_trace(go.Scatter(
         x=portfolio_cum_returns_aligned.index,
         y=portfolio_cum_returns_aligned,
         mode='lines',
         name='Dynamic Portfolio',
-        line=dict(width=3)
+        line=dict(color='blue', width=3)
     ))
     fig.add_trace(go.Scatter(
         x=stoxx600_cum_returns_aligned.index,
         y=stoxx600_cum_returns_aligned,
         mode='lines',
         name='STOXX 600 (XSX6.MI)',
-        line=dict(dash='dash', width=2)
+        line=dict(color='red', dash='dash', width=2)
     ))
     fig.add_trace(go.Scatter(
         x=stoxx_50_cum_returns_aligned.index,
         y=stoxx_50_cum_returns_aligned,
         mode='lines',
-        name='Stoxx 50  ',
-        line=dict(dash='dot', width=2)
+        name='Stoxx 50',
+        line=dict(color='green', dash='dot', width=2)
     ))
     fig.update_layout(
         title='Portfolio Performance',
@@ -409,9 +414,13 @@ elif selected_section == 'Portfolio Construction':
         yaxis_title='Cumulative Returns',
         width=1100,
         height=600,
-        font=dict(size=14)
+        font=dict(size=14),
+        # Ensure the legend or hovermode is standard:
+        hovermode='x unified'
     )
+    
     st.plotly_chart(fig, use_container_width=True)
+#####################
 
     # Portfolio Allocations
     st.markdown('---')
