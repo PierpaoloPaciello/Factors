@@ -303,8 +303,7 @@ common_idx = portfolio_cum_returns.index \
     .intersection(stoxx600_cum_returns.index) \
     .intersection(stoxx_50_cum_returns.index)
 
-portfolio_cum_returns_aligned   = portfolio_cum_returns.loc[common_idx]
-stoxx600_cum_returns_aligned    = stoxx600_cum_returns.loc[common_idx]
+portfolio_cum_returns_aligned   = portfolio_cum_returns.loc[common_idx]    = stoxx600_cum_returns.loc[common_idx]
 stoxx_50_cum_returns_aligned  = stoxx_50_cum_returns.loc[common_idx]
 
 portfolio_returns_aligned  = portfolio_returns.loc[common_idx]
@@ -412,6 +411,7 @@ elif selected_section == 'Portfolio Construction':
         yaxis_title='Cumulative Returns'
     )
     st.plotly_chart(fig, use_container_width=True)
+    
 #####################
 
     # Portfolio Allocations
@@ -487,7 +487,7 @@ elif selected_section == 'Portfolio Construction':
     portfolio_rolling_sharpe = portfolio_returns_aligned.rolling(window_size).apply(
         lambda x: (x.mean() / x.std()) * np.sqrt(252) if x.std() != 0 else np.nan
     )
-    msci_rolling_sharpe = stoxx_50_returns_aligned.rolling(window_size).apply(
+    msci_rolling_sharpe = stoxx600_returns_aligned.rolling(window_size).apply(
         lambda x: (x.mean() / x.std()) * np.sqrt(252) if x.std() != 0 else np.nan
     )
     
@@ -507,7 +507,7 @@ elif selected_section == 'Portfolio Construction':
         x=msci_rolling_sharpe.index, 
         y=msci_rolling_sharpe,
         mode='lines', 
-        name='Stoxx 50',
+        name='Stoxx 600',
         line=dict(dash='dash')
     ))
     fig.update_layout(
@@ -527,7 +527,7 @@ elif selected_section == 'Portfolio Construction':
     st.markdown('---')
     #st.markdown('## Rolling Drawdown Comparison')
     portfolio_drawdown = calculate_drawdown(portfolio_cum_returns_aligned)
-    msci_drawdown      = calculate_drawdown(stoxx_50_cum_returns_aligned)
+    msci_drawdown = calculate_drawdown(stoxx600_cum_returns_aligned)
 
     fig = go.Figure()
     fig.add_trace(go.Scatter(
@@ -536,7 +536,7 @@ elif selected_section == 'Portfolio Construction':
     ))
     fig.add_trace(go.Scatter(
         x=msci_drawdown.index, y=msci_drawdown,
-        mode='lines', name='Stoxx 50  ', line=dict(dash='dash')
+        mode='lines', name='Stoxx 600  ', line=dict(dash='dash')
     ))
     fig.update_layout(
         title='Rolling Drawdown',
@@ -678,7 +678,7 @@ elif selected_section == 'Mean Portfolio Evolution':
     #st.markdown('## Rolling Sharpe Ratio (Mean Portfolio)')
 
     mean_returns_aligned = mean_portfolio_returns.loc[mean_common_idx]
-    msci_returns_aligned = stoxx_50_returns.loc[mean_common_idx]
+    msci_returns_aligned = stoxx600_returns.loc[mean_common_idx]
     
     mean_rolling_sharpe = mean_returns_aligned.rolling(window_size).apply(
         lambda x: (x.mean() / x.std()) * np.sqrt(252) if x.std() != 0 else np.nan
