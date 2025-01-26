@@ -303,7 +303,9 @@ common_idx = portfolio_cum_returns.index \
     .intersection(stoxx600_cum_returns.index) \
     .intersection(stoxx_50_cum_returns.index)
 
-portfolio_cum_returns_aligned   = portfolio_cum_returns.loc[common_idx]    = stoxx600_cum_returns.loc[common_idx]
+portfolio_cum_returns_aligned = portfolio_cum_returns.loc[common_idx]
+stoxx600_cum_returns_aligned  = stoxx600_cum_returns.loc[common_idx]
+stoxx_50_cum_returns_aligned  = stoxx_50_cum_returns.loc[common_idx]
 stoxx_50_cum_returns_aligned  = stoxx_50_cum_returns.loc[common_idx]
 
 portfolio_returns_aligned  = portfolio_returns.loc[common_idx]
