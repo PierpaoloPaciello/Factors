@@ -678,7 +678,7 @@ elif selected_section == 'Mean Portfolio Evolution':
     #st.markdown('## Rolling Sharpe Ratio (Mean Portfolio)')
 
     mean_returns_aligned = mean_portfolio_returns.loc[mean_common_idx]
-    msci_returns_aligned = stoxx600_returns.loc[mean_common_idx]
+    msci_returns_aligned = stoxx_50_returns.loc[mean_common_idx]
     
     mean_rolling_sharpe = mean_returns_aligned.rolling(window_size).apply(
         lambda x: (x.mean() / x.std()) * np.sqrt(252) if x.std() != 0 else np.nan
