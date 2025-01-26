@@ -751,6 +751,7 @@ elif selected_section == 'Mean Portfolio Evolution':
         stoxx_annual_ret = stoxx_annual_ret.iloc[:,0]
     if isinstance(msci_annual_ret, pd.DataFrame):
         msci_annual_ret = msci_annual_ret.iloc[:,0]
+    
 
     df_annual_mean = pd.DataFrame({
         'Mean Portfolio': mean_annual_ret,
