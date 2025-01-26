@@ -622,7 +622,11 @@ elif selected_section == 'Mean Portfolio Evolution':
     stoxx_cum_aligned         = stoxx600_cum_returns.loc[mean_common_idx]
     msci_cum_aligned          = stoxx_50_cum_returns.loc[mean_common_idx]
 
-    #st.markdown('### Mean Portfolio vs. STOXX 600 & Stoxx 50')
+    # Convert each DataFrame into a Series if they have shape (n,1).
+    mean_cum_returns_aligned = mean_cum_returns_aligned.squeeze()
+    stoxx_cum_aligned        = stoxx_cum_aligned.squeeze()
+    msci_cum_aligned         = msci_cum_aligned.squeeze()
+    
     fig_mean = go.Figure()
     fig_mean.add_trace(go.Scatter(
         x=mean_cum_returns_aligned.index,
@@ -654,6 +658,7 @@ elif selected_section == 'Mean Portfolio Evolution':
     )
     st.plotly_chart(fig_mean, use_container_width=True)
 
+
     st.markdown('### Last Mean Portfolio Weights')
     st.dataframe(mean_weights_monthly.tail().style.background_gradient(cmap='Blues'), use_container_width=True)
 
@@ -674,14 +679,18 @@ elif selected_section == 'Mean Portfolio Evolution':
 
     mean_returns_aligned = mean_portfolio_returns.loc[mean_common_idx]
     msci_returns_aligned = stoxx_50_returns.loc[mean_common_idx]
-
+    
     mean_rolling_sharpe = mean_returns_aligned.rolling(window_size).apply(
-        lambda x: (x.mean()/x.std())*np.sqrt(252) if x.std()!=0 else np.nan
+        lambda x: (x.mean() / x.std()) * np.sqrt(252) if x.std() != 0 else np.nan
     )
     msci_rolling_sharpe_mean = msci_returns_aligned.rolling(window_size).apply(
-        lambda x: (x.mean()/x.std())*np.sqrt(252) if x.std()!=0 else np.nan
+        lambda x: (x.mean() / x.std()) * np.sqrt(252) if x.std() != 0 else np.nan
     )
-
+    
+    # Flatten (n,1) DataFrames to (n,) Series if needed
+    mean_rolling_sharpe = mean_rolling_sharpe.squeeze()
+    msci_rolling_sharpe_mean = msci_rolling_sharpe_mean.squeeze()
+    
     fig_sharpe = go.Figure()
     fig_sharpe.add_trace(go.Scatter(
         x=mean_rolling_sharpe.index, y=mean_rolling_sharpe,
