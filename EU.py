@@ -480,22 +480,35 @@ elif selected_section == 'Portfolio Construction':
     # Rolling Sharpe Ratio
     st.markdown('---')
     #st.markdown('## Rolling Sharpe Ratio Comparison')
-
+    
+       # Rolling Sharpe Ratio
+    window_size = 252  # for example
+    
     portfolio_rolling_sharpe = portfolio_returns_aligned.rolling(window_size).apply(
-        lambda x: (x.mean() / x.std()) * np.sqrt(252) if x.std()!=0 else np.nan
+        lambda x: (x.mean() / x.std()) * np.sqrt(252) if x.std() != 0 else np.nan
     )
     msci_rolling_sharpe = stoxx_50_returns_aligned.rolling(window_size).apply(
-        lambda x: (x.mean() / x.std()) * np.sqrt(252) if x.std()!=0 else np.nan
+        lambda x: (x.mean() / x.std()) * np.sqrt(252) if x.std() != 0 else np.nan
     )
-
+    
+    # Convert both to a Series if they happen to be (n,1) DataFrames:
+    portfolio_rolling_sharpe = portfolio_rolling_sharpe.squeeze()
+    msci_rolling_sharpe      = msci_rolling_sharpe.squeeze()
+    
+    # Now plot
     fig = go.Figure()
     fig.add_trace(go.Scatter(
-        x=portfolio_rolling_sharpe.index, y=portfolio_rolling_sharpe,
-        mode='lines', name='Dynamic Portfolio'
+        x=portfolio_rolling_sharpe.index, 
+        y=portfolio_rolling_sharpe,
+        mode='lines', 
+        name='Dynamic Portfolio'
     ))
     fig.add_trace(go.Scatter(
-        x=msci_rolling_sharpe.index, y=msci_rolling_sharpe,
-        mode='lines', name='Stoxx 50  ', line=dict(dash='dash')
+        x=msci_rolling_sharpe.index, 
+        y=msci_rolling_sharpe,
+        mode='lines', 
+        name='Stoxx 50',
+        line=dict(dash='dash')
     ))
     fig.update_layout(
         title='Rolling Sharpe Ratio',
@@ -507,6 +520,8 @@ elif selected_section == 'Portfolio Construction':
         height=600
     )
     st.plotly_chart(fig, use_container_width=True)
+
+    #st.plotly_chart(fig, use_container_width=True)
 
     # Rolling Drawdown
     st.markdown('---')
