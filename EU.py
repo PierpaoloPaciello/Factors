@@ -680,7 +680,7 @@ elif selected_section == 'Mean Portfolio Evolution':
     #st.markdown('## Rolling Sharpe Ratio (Mean Portfolio)')
 
     mean_returns_aligned = mean_portfolio_returns.loc[mean_common_idx]
-    msci_returns_aligned = stoxx_50_returns.loc[mean_common_idx]
+    msci_returns_aligned = stoxx600_returns.loc[mean_common_idx]
     
     mean_rolling_sharpe = mean_returns_aligned.rolling(window_size).apply(
         lambda x: (x.mean() / x.std()) * np.sqrt(252) if x.std() != 0 else np.nan
@@ -700,7 +700,7 @@ elif selected_section == 'Mean Portfolio Evolution':
     ))
     fig_sharpe.add_trace(go.Scatter(
         x=msci_rolling_sharpe_mean.index, y=msci_rolling_sharpe_mean,
-        mode='lines', name='Stoxx 50', line=dict(dash='dash')
+        mode='lines', name='Stoxx 600', line=dict(dash='dash')
     ))
     fig_sharpe.update_layout(
         title='Rolling Sharpe Ratio Mean Portfolio',
@@ -726,7 +726,7 @@ elif selected_section == 'Mean Portfolio Evolution':
     ))
     fig_dd.add_trace(go.Scatter(
         x=msci_drawdown_mean.index, y=msci_drawdown_mean,
-        mode='lines', name='Stoxx 50', line=dict(dash='dash')
+        mode='lines', name='Stoxx 600', line=dict(dash='dash')
     ))
     fig_dd.update_layout(
         title='Rolling Drawdown Mean Portfolio',
