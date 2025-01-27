@@ -740,41 +740,54 @@ elif selected_section == 'Mean Portfolio Evolution':
 
     # Resample weights_df to monthly frequency
     weights_monthly = weights_df.resample('M').first()
-
+    
     # Create a DataFrame to store mean portfolio weights
     mean_weights_monthly = pd.DataFrame(index=weights_monthly.index, columns=weights_monthly.columns)
-
+    
     # Calculate cumulative average weights at each month
     for i in range(len(weights_monthly)):
         weights_up_to_month = weights_monthly.iloc[:i+1]
         cumulative_avg_weights = weights_up_to_month.mean()
         mean_weights_monthly.iloc[i] = cumulative_avg_weights
-
+    
     # Forward-fill 
     mean_weights_df = mean_weights_monthly.reindex(daily_returns.index, method='ffill').fillna(0)
-
+    
     # Calculate mean portfolio daily returns
     mean_portfolio_returns = (daily_returns * mean_weights_df.shift(1)).sum(axis=1)
-
+    
     # Calculate cumulative returns
     mean_portfolio_cum_returns = (1 + mean_portfolio_returns).cumprod()
-
+    
     # Align dates with benchmarks
     common_index = mean_portfolio_cum_returns.index.intersection(msci_world_cum_returns.index).intersection(spy_cum_returns.index)
     mean_portfolio_cum_returns_aligned = mean_portfolio_cum_returns.loc[common_index]
     msci_world_cum_returns_aligned = msci_world_cum_returns.loc[common_index]
     spy_cum_returns_aligned = spy_cum_returns.loc[common_index]
-
-    mean_cum_returns_aligned = mean_cum_returns_aligned.squeeze()
+    
+    # Fixed variable name here
+    mean_portfolio_cum_returns_aligned = mean_portfolio_cum_returns_aligned.squeeze()
     spy_cum_returns_aligned = spy_cum_returns_aligned.squeeze()
     msci_world_cum_returns_aligned = msci_world_cum_returns_aligned.squeeze()
-
+    
     # Plot Mean Portfolio vs. SPY and MSCI World ETF
     st.markdown('### Mean Portfolio Performance vs. Benchmarks')
     fig = go.Figure()
-    fig.add_trace(go.Scatter(x=mean_portfolio_cum_returns_aligned.index, y=mean_portfolio_cum_returns_aligned, mode='lines', name='Mean Portfolio', line=dict(width=3)))
-    fig.add_trace(go.Scatter(x=spy_cum_returns_aligned.index, y=spy_cum_returns_aligned, mode='lines', name='SPY ETF', line=dict(dash='dash', width=2)))
-    fig.add_trace(go.Scatter(x=msci_world_cum_returns_aligned.index, y=msci_world_cum_returns_aligned, mode='lines', name='MSCI World ETF (URTH)', line=dict(dash='dot', width=2)))
+    fig.add_trace(go.Scatter(x=mean_portfolio_cum_returns_aligned.index, 
+                            y=mean_portfolio_cum_returns_aligned, 
+                            mode='lines', 
+                            name='Mean Portfolio', 
+                            line=dict(width=3)))
+    fig.add_trace(go.Scatter(x=spy_cum_returns_aligned.index, 
+                            y=spy_cum_returns_aligned, 
+                            mode='lines', 
+                            name='SPY ETF', 
+                            line=dict(dash='dash', width=2)))
+    fig.add_trace(go.Scatter(x=msci_world_cum_returns_aligned.index, 
+                            y=msci_world_cum_returns_aligned, 
+                            mode='lines', 
+                            name='MSCI World ETF (URTH)', 
+                            line=dict(dash='dot', width=2)))
     fig.update_layout(
         title='Mean Portfolio Performance',
         xaxis_title='Date',
@@ -785,18 +798,18 @@ elif selected_section == 'Mean Portfolio Evolution':
         font=dict(size=14)
     )
     st.plotly_chart(fig, use_container_width=True)
-
+    
     # Portfolio Allocations
     st.markdown('### Mean Portfolio Weights Sample (Monthly Allocations)')
     st.dataframe(mean_weights_monthly.head().style.background_gradient(cmap='Blues'), use_container_width=True)
-
+    
     # Plot the evolving mean allocations over time
     fig = make_subplots(
         rows=1, cols=1,
         subplot_titles=('Evolving Mean Portfolio Allocations Over Time',),
         specs=[[{"type": "xy"}]]
     )
-
+    
     for etf in mean_weights_monthly.columns[mean_weights_monthly.sum() > 0]:
         fig.add_trace(
             go.Scatter(
@@ -808,7 +821,7 @@ elif selected_section == 'Mean Portfolio Evolution':
             ),
             row=1, col=1
         )
-
+    
     fig.update_layout(
         height=600,
         showlegend=True,
@@ -816,45 +829,54 @@ elif selected_section == 'Mean Portfolio Evolution':
         legend_title='ETF',
         font=dict(size=14)
     )
-
+    
     fig.update_yaxes(title_text='Mean Portfolio Weight', row=1, col=1)
     fig.update_xaxes(title_text='Date', row=1, col=1)
-
+    
     st.plotly_chart(fig, use_container_width=True)
-
+    
     # Rolling Sharpe Ratios
     st.markdown('---')
     st.markdown('''
     ## Rolling Sharpe Ratio Comparison
-
+    
     This section compares the rolling Sharpe Ratios of the Mean Portfolio and the MSCI World ETF.
     ''')
-
-    mean_returns_aligned = mean_portfolio_returns.loc[mean_common_idx]
-    msci_returns_aligned = msci_world_returns.loc[mean_common_idx]
-
-
+    
+    # Use common_index instead of undefined mean_common_idx
+    mean_returns_aligned = mean_portfolio_returns.loc[common_index]
+    msci_returns_aligned = msci_world_returns.loc[common_index]
+    
+    # Define window_size (add this if not defined)
+    window_size = 252  # Typical 1-year window for daily data
+    
     # Calculate rolling Sharpe Ratios
     mean_portfolio_rolling_sharpe = mean_portfolio_returns.rolling(window=window_size).apply(
         lambda x: (x.mean() / x.std()) * np.sqrt(252)
     )
-
+    
     msci_rolling_sharpe_aligned = msci_world_returns.loc[mean_portfolio_returns.index].rolling(window=window_size).apply(
         lambda x: (x.mean() / x.std()) * np.sqrt(252)
     )
-
+    
     mean_portfolio_rolling_sharpe = mean_portfolio_rolling_sharpe.squeeze()
     msci_rolling_sharpe_aligned = msci_rolling_sharpe_aligned.squeeze()
-
+    
     # Plot rolling Sharpe Ratios
     fig = go.Figure()
     fig.add_trace(go.Scatter(
-        x=mean_portfolio_rolling_sharpe.index, y=mean_portfolio_rolling_sharpe,
-        mode='lines', name='Mean Portfolio', line=dict(color='green', width=2)
+        x=mean_portfolio_rolling_sharpe.index, 
+        y=mean_portfolio_rolling_sharpe,
+        mode='lines', 
+        name='Mean Portfolio', 
+        line=dict(color='green', width=2)
     ))
     fig.add_trace(go.Scatter(
-        x=msci_rolling_sharpe_aligned.index, y=msci_rolling_sharpe_aligned,
-        mode='lines', name='MSCI World ETF (URTH)', line=dict(color='red', dash='dash', width=2)
+        x=msci_rolling_sharpe_aligned.index, 
+        y=msci_rolling_sharpe_aligned,
+        mode='lines', 
+        name='MSCI World ETF (URTH)', 
+        line=dict(color='red', dash='dash', width=2)
     ))
     fig.update_layout(
         title='Rolling Sharpe Ratio Comparison',
