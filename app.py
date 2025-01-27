@@ -609,6 +609,10 @@ elif selected_section == 'Portfolio Construction':
         lambda x: (x.mean() / x.std()) * np.sqrt(252)
     )
 
+    # Convert both to a Series if they happen to be (n,1) DataFrames:
+    portfolio_rolling_sharpe = portfolio_rolling_sharpe.squeeze()
+    msci_rolling_sharpe = msci_rolling_sharpe.squeeze()
+
     # Plot rolling Sharpe Ratios
     fig = go.Figure()
     fig.add_trace(go.Scatter(
