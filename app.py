@@ -474,6 +474,11 @@ elif selected_section == 'Portfolio Construction':
     msci_world_cum_returns_aligned = msci_world_cum_returns.loc[common_index]
     spy_cum_returns_aligned = spy_cum_returns.loc[common_index]
 
+    #flatten
+    msci_world_cum_returns_aligned = msci_world_cum_returns_aligned.squeeze()
+    spy_cum_returns_aligned = spy_cum_returns_aligned.squeeze()
+
+
     # Plot Portfolio vs. SPY and MSCI World ETF
     st.markdown('### Portfolio Performance vs. Benchmarks')
     fig = go.Figure()
