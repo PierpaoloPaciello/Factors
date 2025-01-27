@@ -746,14 +746,11 @@ elif selected_section == 'Mean Portfolio Evolution':
 
     # Calculate cumulative average weights at each month
     for i in range(len(weights_monthly)):
-        # Get weights up to current month
         weights_up_to_month = weights_monthly.iloc[:i+1]
-        # Calculate cumulative average weights
         cumulative_avg_weights = weights_up_to_month.mean()
-        # Assign cumulative average weights at the current month
         mean_weights_monthly.iloc[i] = cumulative_avg_weights
 
-    # Forward-fill the weights to daily frequency
+    # Forward-fill 
     mean_weights_df = mean_weights_monthly.reindex(daily_returns.index, method='ffill').fillna(0)
 
     # Calculate mean portfolio daily returns
@@ -767,6 +764,10 @@ elif selected_section == 'Mean Portfolio Evolution':
     mean_portfolio_cum_returns_aligned = mean_portfolio_cum_returns.loc[common_index]
     msci_world_cum_returns_aligned = msci_world_cum_returns.loc[common_index]
     spy_cum_returns_aligned = spy_cum_returns.loc[common_index]
+
+    mean_cum_returns_aligned = mean_cum_returns_aligned.squeeze()
+    spy_cum_returns_aligned = spy_cum_returns_aligned.squeeze()
+    msci_world_cum_returns_aligned = msci_world_cum_returns_aligned.squeeze()
 
     # Plot Mean Portfolio vs. SPY and MSCI World ETF
     st.markdown('### Mean Portfolio Performance vs. Benchmarks')
@@ -837,6 +838,9 @@ elif selected_section == 'Mean Portfolio Evolution':
     msci_rolling_sharpe_aligned = msci_world_returns.loc[mean_portfolio_returns.index].rolling(window=window_size).apply(
         lambda x: (x.mean() / x.std()) * np.sqrt(252)
     )
+
+    mean_portfolio_rolling_sharpe = mean_portfolio_rolling_sharpe.squeeze()
+    msci_rolling_sharpe_aligned = msci_rolling_sharpe_aligned.squeeze()
 
     # Plot rolling Sharpe Ratios
     fig = go.Figure()
