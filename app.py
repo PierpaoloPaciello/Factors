@@ -830,6 +830,10 @@ elif selected_section == 'Mean Portfolio Evolution':
     This section compares the rolling Sharpe Ratios of the Mean Portfolio and the MSCI World ETF.
     ''')
 
+    mean_returns_aligned = mean_portfolio_returns.loc[mean_common_idx]
+    msci_returns_aligned = msci_world_returns.loc[mean_common_idx]
+
+
     # Calculate rolling Sharpe Ratios
     mean_portfolio_rolling_sharpe = mean_portfolio_returns.rolling(window=window_size).apply(
         lambda x: (x.mean() / x.std()) * np.sqrt(252)
