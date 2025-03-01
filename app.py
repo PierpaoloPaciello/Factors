@@ -491,8 +491,6 @@ elif selected_section == 'Portfolio Construction':
         yaxis_title='Cumulative Returns',
         width=1200,
         height=600,
-        legend=dict(x=0.02, y=0.98),
-        font=dict(size=14),
     )
     st.plotly_chart(fig, use_container_width=True)
 
