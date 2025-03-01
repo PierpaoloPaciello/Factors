@@ -410,9 +410,9 @@ elif selected_section == 'Portfolio Construction':
     fig.update_layout(
         title='Portfolio Performance',
         xaxis_title='Date',
-        yaxis_title='Cumulative Returns'
+        yaxis_title='Cumulative Returns',
         legend=dict(x=0.02, y=0.98),
-        font=dict(size=14)
+        font=dict(size=14)     
     )
     st.plotly_chart(fig, use_container_width=True)
     
