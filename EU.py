@@ -411,6 +411,8 @@ elif selected_section == 'Portfolio Construction':
         title='Portfolio Performance',
         xaxis_title='Date',
         yaxis_title='Cumulative Returns',
+        width=1200,
+        height=600,
         legend=dict(x=0.02, y=0.98),
         font=dict(size=14)     
     )
