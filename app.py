@@ -124,10 +124,10 @@ def get_oecd_data(countries):
     return df
 
 # List of countries for DI calculation
-countries = ['AUS', 'AUT', 'BEL', 'CAN', 'CHL', 'CZE', 'DNK', 'EST', 'FIN', 'FRA',
-             'DEU', 'GRC', 'HUN', 'ISL', 'IRL', 'ISR', 'ITA', 'JPN', 'KOR', 'LVA',
-             'LTU', 'LUX', 'MEX', 'NLD', 'NZL', 'NOR', 'POL', 'PRT', 'SVK', 'SVN',
-             'ESP', 'SWE', 'CHE', 'TUR', 'GBR', 'USA']
+countries = [
+    'AUS', 'CAN', 'FRA', 'DEU', 'ITA', 'JPN', 'DNK', 'KOR', 'MEX', 'ESP',
+    'TUR', 'GBR', 'USA', 'BRA', 'CHN', 'IND', 'IDN', 'ZAF'
+]
 
 # Fetch the CLI data for all countries
 with st.spinner('Fetching OECD CLI data...'):
