@@ -175,7 +175,7 @@ pivot_data = pivot_data.dropna(subset=['Phase'])
 tickers = [
     'QUAL', 'USMV', 'DYNF', 'MTUM', 'VLUE',
     'LRGF', 'SMLF', 'SIZE', 'SMMV', 'IGS', 'FOVL',
-    'HDV', 'DGRO', 'DVY', 'IJH'
+    'HDV', 'DGRO', 'DVY', 'IJH',
 ]
 
 etf_labels = {
