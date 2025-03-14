@@ -148,8 +148,6 @@ pivot_data.index = pd.to_datetime(pivot_data.index).tz_localize(None)
 # Shift by 1 month for OECD CLI lag
 pivot_data.index = pivot_data.index + pd.DateOffset(months=1)
 
-# --- Moved calculation of DI and Phases here ---
-# Calculate Diffusion Index and Economic Phases
 pivot_data_change = pivot_data.diff()
 diffusion_index = (pivot_data_change > 0).sum(axis=1) / len(pivot_data.columns)
 pivot_data['DI'] = diffusion_index
@@ -174,30 +172,28 @@ pivot_data = pivot_data.dropna(subset=['Phase'])
 
 # --- Common data preparation for all sections ---
 
-# List of ETF tickers
 tickers = [
-    'QUAL', 'USMV', 'MTUM', 'VLUE', 'EFAV', 'ACWV',
-    'LRGF', 'IMTM', 'IVLU', 'SMLF', 'ISCF',
-    'SIZE', 'GLOF',
-    'HDV'
+    'QUAL', 'USMV', 'DYNF', 'MTUM', 'VLUE',
+    'LRGF', 'SMLF', 'SIZE', 'SMMV', 'SVAL', 'FOVL',
+    'ESMV', 'HDV', 'DGRO', 'DVY',
 ]
 
-# Mapping of ETF tickers to labels
 etf_labels = {
     'QUAL': 'Quality',
     'USMV': 'Low Volatility',
+    'DYNF' : 'Multifactor',
     'MTUM': 'Momentum',
     'VLUE': 'Value',
-    'EFAV': 'Low Volatility',
-    'ACWV': 'Low Volatility',
     'LRGF': 'Multifactor',
-    'IMTM': 'Momentum',
-    'IVLU': 'Value',
     'SMLF': 'Size',
-    'ISCF': 'Size',
     'SIZE': 'Size',
-    'GLOF': 'Multifactor',
-    'HDV': 'High Dividend'
+    'SMMV': 'Low Volatility',
+    'SVAL': 'Size',
+    'FVOL': 'Size',
+    'ESMV': 'Low Volatility',
+    'HDV': 'High Dividend',
+    'DHRO': 'High Dividend',
+    'DVY': 'High Dividend',
 }
 
 labels_df = pd.DataFrame(list(etf_labels.items()), columns=['Ticker', 'Label'])
