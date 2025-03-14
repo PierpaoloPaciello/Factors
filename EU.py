@@ -155,24 +155,32 @@ pivot_data.dropna(subset=['Phase'], inplace=True)
 # ------------------------------------------------------------------------------
 # 2) European Factor ETFs
 tickers = [
-    'IEVL.MI',  # Value
-    'IEQU.MI',  # Quality
-    'IEMO.MI',  # Momentum
-    'IFSE.MI',  # Multifactor
-    'IESZ.MI',  # Size
-    'MVEU.MI',  # Minimum Volatility
-    'EHF1.DE',  # High Dividend
-    'LEONIA.MI' # Cash
+    'IEVL.MI',   # Value
+    'QDVX.DE',   # Quality dividend
+    'IDVY.MI',   # High Dividend
+    'CSEMUS.MI', # Size
+    'IEQU.MI',   # Quality
+    'IEMO.MI',   # Momentum
+    'EMUM.L',    # Size
+    'IFSE.MI',   # Multifactor
+    'IESZ.MI',   # Size
+    'MVEU.MI',   # Minimum Volatility
+    'EHF1.DE',   # High Dividend
+    'LEONIA.MI'  # Cash
 ]
 
 etf_labels = {
-    'IEVL.MI': 'Value',
-    'IEQU.MI': 'Quality',
-    'IEMO.MI': 'Momentum',
-    'IFSE.MI': 'Multifactor',
-    'MVEU.MI': 'Minimum Volatility',
-    'IESZ.MI': 'Size',
-    'EHF1.DE': 'High Dividend',
+    'IEVL.MI':   'Value',
+    'QDVX.DE':   'Quality dividend',
+    'IDVY.MI':   'High Dividend',
+    'CSEMUS.MI'  'Size',
+    'IEQU.MI':   'Quality',
+    'IEMO.MI':   'Momentum',
+    'EMUM.L':    'Size',
+    'IFSE.MI':   'Multifactor',
+    'MVEU.MI':   'Minimum Volatility',
+    'IESZ.MI':   'Size',
+    'EHF1.DE':   'High Dividend',
     'LEONIA.MI': 'Cash'
 }
 
