@@ -289,28 +289,34 @@ for phase in unique_phases:
     top_etfs = sorted_etfs.head(3)
     best_etfs_per_phase[phase] = top_etfs.index.tolist()
 
-# Calculate dynamic portfolio weights
+# Step 1: Identify the 14th day of each month in the daily returns index
+rebalancing_dates = daily_returns.index[daily_returns.index.day == 14]
+
+# Initialize a weights DataFrame with zeros
 weights_df = pd.DataFrame(index=daily_returns.index, columns=daily_returns.columns).fillna(0)
 
-# For each date, assign weights based on the phase
-for date in daily_returns.index:
-    # Get the economic phase for the current date
-    phase = daily_phases.loc[date]
+# Step 2 & 3: Loop over each rebalancing date, get the month’s signal, and assign weights
+for rebal_date in rebalancing_dates:
+    # Find the first trading day of the month for the current rebalancing date
+    month_start = daily_returns.index[
+        (daily_returns.index.year == rebal_date.year) &
+        (daily_returns.index.month == rebal_date.month)
+    ].min()
     
-    # Get the top ETFs for the current phase
+    # Use the signal from the month’s start (assumed to be available on day 1)
+    phase = daily_phases.loc[month_start]
+    
+    # Get the top ETFs for the given phase
     etfs = best_etfs_per_phase.get(phase, [])
-    
     if not etfs:
         continue
     
-    # Equal weighting among selected ETFs
-    weights = np.repeat(1/len(etfs), len(etfs))
-    
-    # Assign weights
-    weights_df.loc[date, etfs] = weights
+    # Assign equal weights to these ETFs
+    weights = np.repeat(1 / len(etfs), len(etfs))
+    weights_df.loc[rebal_date, etfs] = weights
 
-# Forward-fill the weights to handle any NaN values
-weights_df.fillna(method='ffill', inplace=True)
+# Forward-fill the weights so that each day until the next rebalancing date uses the same weights
+weights_df = weights_df.ffill()
 
 # Prepare data for allocations over time
 latest_date = weights_df.index.max()
