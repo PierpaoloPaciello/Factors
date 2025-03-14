@@ -166,7 +166,7 @@ tickers = [
     'IESZ.MI',   # Size
     'MVEU.MI',   # Minimum Volatility
     'EHF1.DE',   # High Dividend
-    #'LEONIA.MI'  # Cash
+    'LEONIA.MI'  # Cash
 ]
 
 etf_labels = {
@@ -181,7 +181,7 @@ etf_labels = {
     'MVEU.MI':   'Minimum Volatility',
     'IESZ.MI':   'Size',
     'EHF1.DE':   'High Dividend',
-    #'LEONIA.MI': 'Cash'
+    'LEONIA.MI': 'Cash'
 }
 
 labels_df = pd.DataFrame(list(etf_labels.items()), columns=['Ticker','Label'])
