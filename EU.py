@@ -265,6 +265,7 @@ for phase in unique_phases:
     best_etfs_per_phase[phase] = top_etfs.index.tolist()
 
 # ------------------------------------------------------------------------------
+'''
 # Build Dynamic Weights
 weights_df = pd.DataFrame(0, index=daily_returns.index, columns=daily_returns.columns)
 for date in daily_returns.index:
@@ -282,6 +283,55 @@ current_weights = weights_df.loc[latest_date]
 current_weights = current_weights[current_weights>0]
 etfs_in_portfolio = weights_df.columns[(weights_df!=0).any()].tolist()
 weights_over_time = weights_df[etfs_in_portfolio]
+
+'''
+
+# Identify rebalancing dates as the 14th day of each month from the daily returns index
+rebalancing_dates = daily_returns.index[daily_returns.index.day == 14]
+
+# Initialize the weights DataFrame with zeros
+weights_df = pd.DataFrame(index=daily_returns.index, columns=daily_returns.columns).fillna(0)
+
+# Loop over each rebalancing date and assign weights until the next rebalancing date
+for i, rebal_date in enumerate(rebalancing_dates):
+    # Get all dates for the current month to determine the first trading day (signal date)
+    current_month_dates = daily_returns.index[
+        (daily_returns.index.year == rebal_date.year) &
+        (daily_returns.index.month == rebal_date.month)
+    ]
+    month_start = current_month_dates.min()
+    
+    # Use the signal from the month’s first trading day
+    phase = daily_phases.loc[month_start]
+    
+    # Retrieve the top ETFs for the given phase (this list should include all top ETFs, e.g., top 3)
+    etfs = best_etfs_per_phase.get(phase, [])
+    if not etfs:
+        continue
+
+    # Assign equal weights to the selected ETFs
+    weights = np.repeat(1 / len(etfs), len(etfs))
+    
+    # Determine the period: from the current rebalancing date until the day before the next rebalancing date
+    if i < len(rebalancing_dates) - 1:
+        next_rebal_date = rebalancing_dates[i + 1]
+    else:
+        next_rebal_date = weights_df.index[-1] + pd.Timedelta(days=1)  # ensure the last period goes to the end
+    
+    # Assign these weights from the current rebalancing date until (but not including) the next one
+    weights_df.loc[rebal_date:next_rebal_date, etfs] = weights
+
+# Forward-fill in case there are any gaps
+weights_df = weights_df.ffill()
+
+# Prepare data for allocations over time (this remains the same as before)
+latest_date = weights_df.index.max()
+current_weights = weights_df.loc[latest_date]
+current_weights = current_weights[current_weights > 0]
+etfs_in_portfolio = weights_df.columns[(weights_df != 0).any()].tolist()
+weights_over_time = weights_df[etfs_in_portfolio]
+
+
 mean_weights = weights_over_time.mean()
 mean_weights = mean_weights[mean_weights>0]
 
