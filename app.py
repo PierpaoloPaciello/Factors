@@ -175,7 +175,7 @@ pivot_data = pivot_data.dropna(subset=['Phase'])
 tickers = [
     'QUAL', 'USMV', 'DYNF', 'MTUM', 'VLUE',
     'LRGF', 'SMLF', 'SIZE', 'SMMV', 'IGS', 'FOVL',
-    'HDV', 'DGRO', 'DVY',
+    'HDV', 'DGRO', 'DVY', 'IJH'
 ]
 
 etf_labels = {
@@ -193,6 +193,7 @@ etf_labels = {
     'HDV': 'High Dividend',
     'DHRO': 'High Dividend',
     'DVY': 'High Dividend',
+    'IJH': 'Size',
 }
 
 labels_df = pd.DataFrame(list(etf_labels.items()), columns=['Ticker', 'Label'])
