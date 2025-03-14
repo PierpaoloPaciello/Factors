@@ -173,7 +173,7 @@ etf_labels = {
     'IEVL.MI':   'Value',
     'QDVX.DE':   'Quality dividend',
     'IDVY.MI':   'High Dividend',
-    'CSEMUS.MI'  'Size',
+    'CSEMUS.MI': 'Size',
     'IEQU.MI':   'Quality',
     'IEMO.MI':   'Momentum',
     'EMUM.L':    'Size',
