@@ -188,7 +188,7 @@ etf_labels = {
     'SMLF': 'Size',
     'SIZE': 'Size',
     'SMMV': 'Low Volatility',
-    'IGS': 'Size',
+    'IJS': 'Size',
     'FVOL': 'Size',
     'HDV': 'High Dividend',
     'DHRO': 'High Dividend',
