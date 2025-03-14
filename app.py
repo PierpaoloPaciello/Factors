@@ -145,6 +145,9 @@ pivot_data.fillna(method='ffill', inplace=True)
 # Convert TIME_PERIOD to datetime and ensure timezone-naive
 pivot_data.index = pd.to_datetime(pivot_data.index).tz_localize(None)
 
+# Shift by 1 month for OECD CLI lag
+pivot_data.index = pivot_data.index + pd.DateOffset(months=1)
+
 # --- Moved calculation of DI and Phases here ---
 # Calculate Diffusion Index and Economic Phases
 pivot_data_change = pivot_data.diff()
