@@ -265,26 +265,6 @@ for phase in unique_phases:
     best_etfs_per_phase[phase] = top_etfs.index.tolist()
 
 # ------------------------------------------------------------------------------
-'''
-# Build Dynamic Weights
-weights_df = pd.DataFrame(0, index=daily_returns.index, columns=daily_returns.columns)
-for date in daily_returns.index:
-    ph = daily_phases.loc[date]
-    picks = best_etfs_per_phase.get(ph, [])
-    if picks:
-        w = np.repeat(1.0 / len(picks), len(picks))
-        weights_df.loc[date, picks] = w
-
-weights_df.fillna(method='ffill', inplace=True)
-
-# Prepare portfolio data
-latest_date = weights_df.index.max()
-current_weights = weights_df.loc[latest_date]
-current_weights = current_weights[current_weights>0]
-etfs_in_portfolio = weights_df.columns[(weights_df!=0).any()].tolist()
-weights_over_time = weights_df[etfs_in_portfolio]
-
-'''
 
 # Identify rebalancing dates as the 14th day of each month from the daily returns index
 rebalancing_dates = daily_returns.index[daily_returns.index.day == 14]
