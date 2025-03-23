@@ -69,19 +69,14 @@ st.title('Factor Investing: Adapting to Economic Phases')
 st.markdown('''
 ## Introduction
 
-This app presents the **Dynamic Portfolio Strategy**, an approach designed to optimize returns by dynamically allocating assets based on economic phases.
+This app presents the **Dynamic Portfolio Strategy**. It uses the **OECD CLI Diffusion Index** to classify economic phases and then maps factor‐based ETFs to those phases.
 
-Using the **OECD CLI Diffusion Index** as a macroeconomic indicator, this strategy identifies four distinct economic phases:
-- **Recovery**: Early growth after a contraction.
-- **Expansion**: Sustained growth phase.
-- **Slowdown**: Decline from peak economic activity.
-- **Contraction**: Widespread economic decline.
-
-By aligning factor-based ETFs with these phases, the strategy seeks to:
-1. Outperform benchmarks (MSCI World ETF (URTH), SPY (S&P 500 ETF)).
-3. Minimize drawdowns during adverse market conditions.
-
-The analysis evaluates this strategy’s performance, highlighting its ability to leverage factors such as Momentum, Quality, and Low Volatility across economic cycles.
+**Key points:**
+- **Economic phases:** Recovery, Expansion, Slowdown, and Contraction.
+- **ETF Selection:**  
+  - *Before 2023*: For demonstration, the top 3 ETFs are selected using the full available data (look‐ahead bias).  
+  - *From 2023 onward*: Only historical data up to the rebalancing date is used (no look‐ahead bias).
+- **Benchmarks:** The strategy is compared with the MSCI World ETF (URTH) and SPY.
 ''')
 
 st.markdown('---')
@@ -93,10 +88,12 @@ sections = [
     'Portfolio Construction',
     'Mean Portfolio Evolution'
 ]
-
 selected_section = st.sidebar.radio('Go to', sections)
 
-# Function to download CLI data from OECD
+# --------------------------
+# 1. Download and Prepare Data
+# --------------------------
+
 @st.cache_data
 def get_oecd_data(countries):
     database = '@DF_CLI'
@@ -104,57 +101,39 @@ def get_oecd_data(countries):
     indicator = 'LI..'
     unit_of_measure = 'AA...'
     start_period = '1990-01'
-    
-    # Join all country codes
     country_code = "+".join(countries)
-    
-    # Create the query URL
     query_text = f"{database}/{country_code}.{frequency}.{indicator}.{unit_of_measure}?startPeriod={start_period}&dimensionAtObservation=AllDimensions"
     url = f"https://sdmx.oecd.org/public/rest/data/OECD.SDD.STES,DSD_STES{query_text}"
-    
     headers = { 
         'User-Agent': 'Mozilla/5.0', 
         'Accept': 'application/vnd.sdmx.data+csv; charset=utf-8' 
     }
-    
-    # Fetch the data
     download = requests.get(url=url, headers=headers)
     df = pd.read_csv(io.StringIO(download.text))
-    
     return df
 
-# List of countries for DI calculation
 countries = [
     'AUS', 'CAN', 'FRA', 'DEU', 'ITA', 'JPN', 'DNK', 'KOR', 'MEX', 'ESP',
     'TUR', 'GBR', 'USA', 'BRA', 'CHN', 'IND', 'IDN', 'ZAF'
 ]
 
-# Fetch the CLI data for all countries
 with st.spinner('Fetching OECD CLI data...'):
     cli_data = get_oecd_data(countries)
 
-# Reshape the data for easier processing
+# Reshape CLI data
 pivot_data = cli_data.pivot(index='TIME_PERIOD', columns='REF_AREA', values='OBS_VALUE')
-
-# Remove the column name to avoid KeyError when selecting columns
 pivot_data.columns.name = None
-
-# Ensure missing values are handled (fill with previous values)
 pivot_data.fillna(method='ffill', inplace=True)
-
-# Convert TIME_PERIOD to datetime and ensure timezone-naive
 pivot_data.index = pd.to_datetime(pivot_data.index).tz_localize(None)
-
-# Shift by 1 month for OECD CLI lag
 pivot_data.index = pivot_data.index + pd.DateOffset(months=1)
 
+# Calculate Diffusion Index (DI)
 pivot_data_change = pivot_data.diff()
 diffusion_index = (pivot_data_change > 0).sum(axis=1) / len(pivot_data.columns)
 pivot_data['DI'] = diffusion_index
 pivot_data['DI_change'] = pivot_data['DI'].diff()
 pivot_data['DI_direction'] = np.where(pivot_data['DI_change'] > 0, 'Rising', 'Falling')
 
-# Define economic phases based on DI level and direction
 def determine_phase(row):
     if row['DI'] < 0.5 and row['DI_direction'] == 'Rising':
         return 'Recovery'
@@ -170,8 +149,9 @@ def determine_phase(row):
 pivot_data['Phase'] = pivot_data.apply(determine_phase, axis=1)
 pivot_data = pivot_data.dropna(subset=['Phase'])
 
-# --- Common data preparation for all sections ---
-
+# --------------------------
+# 2. ETFs, Returns, and Factor Mapping
+# --------------------------
 tickers = [
     'QUAL', 'USMV', 'DYNF', 'MTUM', 'VLUE',
     'LRGF', 'SMLF', 'SIZE', 'SMMV', 'IGS', 'FOVL',
@@ -181,7 +161,7 @@ tickers = [
 etf_labels = {
     'QUAL': 'Quality',
     'USMV': 'Low Volatility',
-    'DYNF' : 'Multifactor',
+    'DYNF': 'Multifactor',
     'MTUM': 'Momentum',
     'VLUE': 'Value',
     'LRGF': 'Multifactor',
@@ -199,6 +179,7 @@ etf_labels = {
 labels_df = pd.DataFrame(list(etf_labels.items()), columns=['Ticker', 'Label'])
 labels_df['Labels'] = labels_df['Label'].apply(lambda x: [label.strip() for label in x.split(',')])
 
+# Set ETF data start date (we keep a longer history so we can show the biased period pre-2023)
 start_date = '2016-01-01'
 end_date = datetime.datetime.today().strftime('%Y-%m-%d')
 
@@ -212,23 +193,15 @@ with st.spinner('Fetching ETF data from Yahoo Finance...'):
 
 data = data.fillna(method='ffill').dropna()
 data.index = data.index.tz_localize(None)
-
 available_tickers = data.columns.tolist()
 labels_df = labels_df[labels_df['Ticker'].isin(available_tickers)]
 
-# Prepare daily returns and phases
 daily_returns = data.pct_change().fillna(0)
 daily_returns.index = daily_returns.index.tz_localize(None)
 pivot_data.index = pivot_data.index.tz_localize(None)
 
-# Extract required columns
 required_columns = ['DI', 'DI_change', 'DI_direction', 'Phase']
-pivot_data_daily = pivot_data[required_columns]
-
-# Reindex to match daily_returns index
-pivot_data_daily = pivot_data_daily.reindex(daily_returns.index, method='ffill')
-pivot_data_daily = pivot_data_daily.fillna(method='bfill')
-
+pivot_data_daily = pivot_data[required_columns].reindex(daily_returns.index, method='ffill').fillna(method='bfill')
 daily_phases = pivot_data_daily['Phase']
 
 # Map ETFs to factors
@@ -237,129 +210,143 @@ for idx, row in labels_df.iterrows():
     for label in row['Labels']:
         factor_etf_mapping.setdefault(label.strip(), []).append(row['Ticker'])
 
-# (Optional) You may display factor performance or other metrics here.
+# --------------------------
+# 3. Precompute Look-Ahead Biased Selections & Factor Performance
+# (These are used for periods before 2023 and for display purposes)
+# --------------------------
+unique_phases = daily_phases.dropna().unique()
 
-# Identify rebalancing dates as the 14th day of each month from the daily returns index
-rebalancing_dates = daily_returns.index[daily_returns.index.day == 14]
-
-# Initialize the weights DataFrame with zeros
-weights_df = pd.DataFrame(index=daily_returns.index, columns=daily_returns.columns).fillna(0)
-
-# ----- DYNAMIC REBALANCING WITH HISTORICAL LOOK-BACK -----
-# For each rebalancing date, select the top 3 ETFs based only on historical data available
-# up to that date and for the phase indicated by the first trading day of that month.
-for i, rebal_date in enumerate(rebalancing_dates):
-    # Get all dates for the current month to determine the first trading day (signal date)
-    current_month_dates = daily_returns.index[
-        (daily_returns.index.year == rebal_date.year) &
-        (daily_returns.index.month == rebal_date.month)
-    ]
-    month_start = current_month_dates.min()
-    # Determine the phase signal from the month’s first trading day
-    phase = daily_phases.loc[month_start]
-    
-    # Use only historical data up to the current rebalancing date
-    historical_dates = daily_returns.index[daily_returns.index <= rebal_date]
-    
-    # Identify dates in the historical window where the phase equals the current phase
-    phase_historical_dates = daily_phases.loc[historical_dates][daily_phases.loc[historical_dates] == phase].index
-    
-    if phase_historical_dates.empty:
-        continue  # Skip rebalancing if no historical data for this phase
-    
-    # Calculate cumulative returns for each ETF over the historical window for this phase
-    phase_returns = daily_returns.loc[phase_historical_dates]
+# (A) Best ETFs per phase using the full sample (look-ahead bias)
+best_etfs_per_phase = {}
+for phase in unique_phases:
+    phase_dates = daily_phases[daily_phases == phase].index.intersection(daily_returns.index)
+    if phase_dates.empty:
+        continue
+    phase_returns = daily_returns.loc[phase_dates]
     cum_returns = (1 + phase_returns).cumprod().iloc[-1] - 1
     sorted_etfs = cum_returns.sort_values(ascending=False)
-    top_etfs = sorted_etfs.head(3).index.tolist()
-    
-    if not top_etfs:
+    top_etfs = sorted_etfs.head(3)
+    best_etfs_per_phase[phase] = top_etfs.index.tolist()
+
+# (B) Factor Performance (look-ahead biased, full sample)
+factor_performance = pd.DataFrame()
+for phase in unique_phases:
+    phase_dates = daily_phases[daily_phases == phase].index.intersection(daily_returns.index)
+    if phase_dates.empty:
         continue
+    factor_cum_returns = {}
+    for factor, etfs in factor_etf_mapping.items():
+        etfs_in_data = [etf for etf in etfs if etf in daily_returns.columns]
+        if not etfs_in_data:
+            continue
+        phase_returns = daily_returns.loc[phase_dates, etfs_in_data]
+        cum_returns = (1 + phase_returns).cumprod()
+        mean_cum_return = cum_returns.iloc[-1].mean() - 1
+        factor_cum_returns[factor] = mean_cum_return
+    factor_cum_returns_df = pd.DataFrame.from_dict(factor_cum_returns, orient='index', columns=[phase])
+    factor_performance = pd.concat([factor_performance, factor_cum_returns_df], axis=1)
+factor_performance.fillna(0, inplace=True)
+
+# --------------------------
+# 4. Portfolio Weights Calculation with Conditional Look-Ahead Bias
+# --------------------------
+# Identify rebalancing dates as the 14th day of each month
+rebalancing_dates = daily_returns.index[daily_returns.index.day == 14]
+weights_df = pd.DataFrame(index=daily_returns.index, columns=daily_returns.columns).fillna(0)
+
+for i, rebal_date in enumerate(rebalancing_dates):
+    # Determine the signal date (first trading day of the month)
+    current_month_dates = daily_returns.index[(daily_returns.index.year == rebal_date.year) &
+                                               (daily_returns.index.month == rebal_date.month)]
+    month_start = current_month_dates.min()
+    phase = daily_phases.loc[month_start]
     
-    # Assign equal weights to the selected ETFs
-    weights = np.repeat(1 / len(top_etfs), len(top_etfs))
+    # For dates before 2023 use the precomputed (biased) selection,
+    # and for 2023 onward recalculate using only historical data.
+    if rebal_date < pd.Timestamp('2023-01-01'):
+        etfs = best_etfs_per_phase.get(phase, [])
+    else:
+        historical_dates = daily_returns.index[daily_returns.index <= rebal_date]
+        phase_historical_dates = daily_phases.loc[historical_dates][daily_phases.loc[historical_dates] == phase].index
+        if phase_historical_dates.empty:
+            continue
+        phase_returns = daily_returns.loc[phase_historical_dates]
+        cum_returns = (1 + phase_returns).cumprod().iloc[-1] - 1
+        sorted_etfs = cum_returns.sort_values(ascending=False)
+        etfs = sorted_etfs.head(3).index.tolist()
     
-    # Determine the period: from current rebalancing date until the day before the next rebalancing date
+    if not etfs:
+        continue
+
+    weights = np.repeat(1/len(etfs), len(etfs))
+    
     if i < len(rebalancing_dates) - 1:
         next_rebal_date = rebalancing_dates[i + 1]
     else:
         next_rebal_date = weights_df.index[-1] + pd.Timedelta(days=1)
     
-    # Apply the weights for the period
-    weights_df.loc[rebal_date:next_rebal_date, top_etfs] = weights
+    weights_df.loc[rebal_date:next_rebal_date, etfs] = weights
 
-# Forward-fill in case there are any gaps
 weights_df = weights_df.ffill()
 
-# Prepare data for allocations over time
+# Prepare portfolio allocations over time
 latest_date = weights_df.index.max()
 current_weights = weights_df.loc[latest_date]
 current_weights = current_weights[current_weights > 0]
 etfs_in_portfolio = weights_df.columns[(weights_df != 0).any()].tolist()
 weights_over_time = weights_df[etfs_in_portfolio]
-
-# Calculate mean allocations over the entire period
 mean_weights = weights_over_time.mean()
 mean_weights = mean_weights[mean_weights > 0]
 
-# --- Calculate Benchmark Data ---
-# Calculate portfolio daily returns
+# --------------------------
+# 5. Benchmark Data and Portfolio Returns
+# --------------------------
 portfolio_returns = (daily_returns * weights_df.shift(1)).sum(axis=1)
-
-# Calculate cumulative returns
 portfolio_cum_returns = (1 + portfolio_returns).cumprod()
 
-# Download MSCI World ETF data
 msci_world = yf.download('URTH', start=portfolio_returns.index.min(), end=end_date)['Close']
 msci_world = msci_world.fillna(method='ffill').dropna()
 msci_world.index = msci_world.index.tz_localize(None)
 msci_world_returns = msci_world.pct_change().fillna(0)
 msci_world_cum_returns = (1 + msci_world_returns).cumprod()
 
-# Download SPY ETF data
 spy = yf.download('SPY', start=portfolio_returns.index.min(), end=end_date)['Close']
 spy = spy.fillna(method='ffill').dropna()
 spy.index = spy.index.tz_localize(None)
 spy_returns = spy.pct_change().fillna(0)
 spy_cum_returns = (1 + spy_returns).cumprod()
 
-# Calculate rolling window size
-window_size = 252  # One year of trading days
+window_size = 252  # one year of trading days
 
-# Calculate rolling drawdown function
 def calculate_drawdown(cumulative_returns):
     peak = cumulative_returns.cummax()
     drawdown = (cumulative_returns - peak) / peak
     return drawdown
 
-# Now proceed with the selected section
+# --------------------------
+# 6. Display Sections and Graphs
+# --------------------------
 if selected_section == 'Methodology':
     st.markdown('---')
-    # Methodology
     st.markdown('''
     ## Methodology
 
-    1. **Economic Phase Identification**:
-       - The Diffusion Index (DI) is calculated monthly and categorized into four phases:
-         - **Recovery**: DI < 0.5 and rising.
-         - **Expansion**: DI ≥ 0.5 and rising.
-         - **Slowdown**: DI ≥ 0.5 and falling.
-         - **Contraction**: DI < 0.5 and falling.
+    - **Economic Phase Identification:**  
+      The Diffusion Index (DI) is computed monthly and used to assign one of four phases:
+      Recovery, Expansion, Slowdown, or Contraction.
+      
+    - **ETF Selection & Portfolio Construction:**  
+      *Before 2023* the top ETFs for each phase are selected using the full future data (introducing look‐ahead bias).  
+      *From 2023 onward* only historical data up to the rebalancing date is used (no look‐ahead bias).
 
-    2. **ETF Selection and Portfolio Construction**:
-       - At each monthly rebalancing, the top 3 ETFs are selected based solely on the historical returns available up to that rebalancing date for the phase indicated by the month’s first trading day.
-       - Portfolios are constructed using equal weights for the selected ETFs.
-
-    3. **Performance Benchmarking**:
-       - Portfolio performance is compared to the MSCI World ETF (URTH) and SPY using cumulative returns, Sharpe Ratios, and drawdowns.
+    - **Performance Benchmarking:**  
+      The dynamic portfolio is compared against the MSCI World ETF (URTH) and SPY ETF.
     ''')
 
     st.markdown('### Economic Phases Data')
     st.dataframe(pivot_data[['DI', 'DI_change', 'Phase']].tail(15).style.background_gradient(cmap='Blues'), use_container_width=True)
 
-    # Plot the Diffusion Index
     st.markdown('### OECD CLI Diffusion Index')
-    
     fig = go.Figure()
     fig.add_trace(
         go.Scatter(
@@ -380,7 +367,7 @@ if selected_section == 'Methodology':
     fig.update_layout(
         title='OECD CLI Diffusion Index',
         xaxis_title='Date',
-        yaxis_title='Diffusion Index',
+        yaxis_title='DI',
         font=dict(size=14),
         hovermode='x unified',
         legend=dict(x=0.01, y=0.99)
@@ -392,31 +379,43 @@ elif selected_section == 'Portfolio Construction':
     st.markdown('''
     ## Portfolio Construction
 
-    The portfolio dynamically rebalances each month. For each rebalancing date (set as the 14th day of the month), 
-    the signal is derived from the first trading day of that month. Then, using only historical data available up to 
-    the rebalancing date for that phase, the top 3 ETFs (by cumulative returns) are selected and equally weighted.
+    The portfolio rebalances on the 14th day of each month.  
+    - *Before 2023*: The top 3 ETFs for the current phase are chosen using the full available data (look‐ahead bias).  
+    - *From 2023 onward*: Only historical data up to the rebalancing date is used (no look‐ahead bias).
     ''')
 
-    # Resample weights to monthly frequency for display
-    weights_monthly = weights_df.resample('M').first()
-
+    st.markdown('### Factor Performance by Phase (Look-Ahead Biased)')
+    # Plot factor performance heatmap
+    factor_performance_t = factor_performance.T
+    plt.figure(figsize=(12, 8))
+    sns.heatmap(factor_performance_t * 100, annot=True, fmt=".2f", cmap='Blues', cbar_kws={'label': 'Return (%)'})
+    plt.xlabel('Factor')
+    plt.ylabel('Economic Phase')
+    st.pyplot(plt.gcf())
+    
+    st.markdown('### Top ETFs During Each Phase (Look-Ahead Biased)')
+    for phase in unique_phases:
+        etf_list = best_etfs_per_phase.get(phase, [])
+        st.markdown(f"**{phase} Phase:** " + (", ".join(etf_list) if etf_list else "No data"))
+    
+    st.markdown('---')
     st.markdown('### Last Portfolio Weights')
+    weights_monthly = weights_df.resample('M').first()
     st.dataframe(weights_monthly.tail().style.background_gradient(cmap='Blues'), use_container_width=True)
-
-    # Align dates for benchmarks
+    
     common_index = portfolio_cum_returns.index.intersection(msci_world_cum_returns.index).intersection(spy_cum_returns.index)
     portfolio_cum_returns_aligned = portfolio_cum_returns.loc[common_index]
-    msci_world_cum_returns_aligned = msci_world_cum_returns.loc[common_index]
-    spy_cum_returns_aligned = spy_cum_returns.loc[common_index]
-
-    msci_world_cum_returns_aligned = msci_world_cum_returns_aligned.squeeze()
-    spy_cum_returns_aligned = spy_cum_returns_aligned.squeeze()
+    msci_world_cum_returns_aligned = msci_world_cum_returns.loc[common_index].squeeze()
+    spy_cum_returns_aligned = spy_cum_returns.loc[common_index].squeeze()
 
     st.markdown('### Portfolio Performance vs. Benchmarks')
     fig = go.Figure()
-    fig.add_trace(go.Scatter(x=portfolio_cum_returns_aligned.index, y=portfolio_cum_returns_aligned, mode='lines', name='Dynamic Portfolio', line=dict(width=3)))
-    fig.add_trace(go.Scatter(x=spy_cum_returns_aligned.index, y=spy_cum_returns_aligned, mode='lines', name='SPY ETF', line=dict(dash='dash', width=2)))
-    fig.add_trace(go.Scatter(x=msci_world_cum_returns_aligned.index, y=msci_world_cum_returns_aligned, mode='lines', name='MSCI World ETF (URTH)', line=dict(dash='dot', width=2)))
+    fig.add_trace(go.Scatter(x=portfolio_cum_returns_aligned.index, y=portfolio_cum_returns_aligned,
+                             mode='lines', name='Dynamic Portfolio', line=dict(width=3)))
+    fig.add_trace(go.Scatter(x=spy_cum_returns_aligned.index, y=spy_cum_returns_aligned,
+                             mode='lines', name='SPY ETF', line=dict(dash='dash', width=2)))
+    fig.add_trace(go.Scatter(x=msci_world_cum_returns_aligned.index, y=msci_world_cum_returns_aligned,
+                             mode='lines', name='MSCI World ETF (URTH)', line=dict(dash='dot', width=2)))
     fig.update_layout(
         title='Portfolio Performance',
         xaxis_title='Date',
@@ -424,34 +423,25 @@ elif selected_section == 'Portfolio Construction':
         width=1200,
         height=600,
         legend=dict(x=0.02, y=0.98),
-        font=dict(size=14)        
+        font=dict(size=14)
     )
     st.plotly_chart(fig, use_container_width=True)
-
+    
     st.markdown('---')
-    st.markdown('''
-    ## Portfolio Allocations
-
-    The strategy dynamically adjusts allocations to align with economic conditions.
-    ''')
-
-    # Resample weights to monthly for visualization
+    st.markdown('### Portfolio Allocations')
     weights_monthly = weights_over_time.resample('M').first()
-
-    # Ensure the latest date is included in the monthly data
     if latest_date not in weights_monthly.index:
         latest_month_end = latest_date.replace(day=1) + MonthEnd(1)
         weights_monthly.loc[latest_month_end] = weights_over_time.loc[latest_date]
-
-    # Create subplots with 3 rows
+    
     fig = make_subplots(
         rows=3, cols=1,
         row_heights=[0.5, 0.25, 0.25],
         vertical_spacing=0.08,
         subplot_titles=(
             'Portfolio Allocations Over Time (Monthly)',
-            f'Current Portfolio Allocation as of {latest_date.strftime("%Y-%m-%d")}',
-            'Mean Portfolio Allocation Over Entire Period'
+            f'Current Allocation as of {latest_date.strftime("%Y-%m-%d")}',
+            'Mean Allocation Over Entire Period'
         ),
         specs=[
             [{"type": "xy"}],
@@ -508,13 +498,9 @@ elif selected_section == 'Portfolio Construction':
     fig.update_yaxes(title_text='Portfolio Weight', row=1, col=1)
     fig.update_xaxes(title_text='Date', row=1, col=1)
     st.plotly_chart(fig, use_container_width=True)
-
+    
     st.markdown('---')
-    st.markdown('''
-    ## Rolling Sharpe Ratio Comparison
-
-    This section compares the rolling Sharpe Ratios of the Dynamic Portfolio and the MSCI World ETF.
-    ''')
+    st.markdown('### Rolling Sharpe Ratio Comparison')
     portfolio_rolling_sharpe = portfolio_returns.rolling(window=window_size).apply(
         lambda x: (x.mean() / x.std()) * np.sqrt(252)
     ).squeeze()
@@ -522,14 +508,10 @@ elif selected_section == 'Portfolio Construction':
         lambda x: (x.mean() / x.std()) * np.sqrt(252)
     ).squeeze()
     fig = go.Figure()
-    fig.add_trace(go.Scatter(
-        x=portfolio_rolling_sharpe.index, y=portfolio_rolling_sharpe,
-        mode='lines', name='Dynamic Portfolio', line=dict(color='blue', width=2)
-    ))
-    fig.add_trace(go.Scatter(
-        x=msci_rolling_sharpe.index, y=msci_rolling_sharpe,
-        mode='lines', name='MSCI World ETF (URTH)', line=dict(color='red', dash='dash', width=2)
-    ))
+    fig.add_trace(go.Scatter(x=portfolio_rolling_sharpe.index, y=portfolio_rolling_sharpe,
+                             mode='lines', name='Dynamic Portfolio', line=dict(color='blue', width=2)))
+    fig.add_trace(go.Scatter(x=msci_rolling_sharpe.index, y=msci_rolling_sharpe,
+                             mode='lines', name='MSCI World ETF (URTH)', line=dict(color='red', dash='dash', width=2)))
     fig.update_layout(
         title='Rolling Sharpe Ratio',
         xaxis_title='Date',
@@ -540,24 +522,16 @@ elif selected_section == 'Portfolio Construction':
         font=dict(size=14)
     )
     st.plotly_chart(fig, use_container_width=True)
-
+    
     st.markdown('---')
-    st.markdown('''
-    ## Rolling Drawdown Comparison
-
-    This section compares the rolling drawdowns of the Dynamic Portfolio and the MSCI World ETF.
-    ''')
+    st.markdown('### Rolling Drawdown Comparison')
     portfolio_drawdown = calculate_drawdown(portfolio_cum_returns)
     msci_drawdown = calculate_drawdown(msci_world_cum_returns_aligned)
     fig = go.Figure()
-    fig.add_trace(go.Scatter(
-        x=portfolio_drawdown.index, y=portfolio_drawdown,
-        mode='lines', name='Dynamic Portfolio', line=dict(color='blue', width=2)
-    ))
-    fig.add_trace(go.Scatter(
-        x=msci_drawdown.index, y=msci_drawdown,
-        mode='lines', name='MSCI World ETF (URTH)', line=dict(color='red', dash='dash', width=2)
-    ))
+    fig.add_trace(go.Scatter(x=portfolio_drawdown.index, y=portfolio_drawdown,
+                             mode='lines', name='Dynamic Portfolio', line=dict(color='blue', width=2)))
+    fig.add_trace(go.Scatter(x=msci_drawdown.index, y=msci_drawdown,
+                             mode='lines', name='MSCI World ETF (URTH)', line=dict(color='red', dash='dash', width=2)))
     fig.update_layout(
         title='Rolling Drawdown',
         xaxis_title='Date',
@@ -569,13 +543,9 @@ elif selected_section == 'Portfolio Construction':
         font=dict(size=14)
     )
     st.plotly_chart(fig, use_container_width=True)
-
+    
     st.markdown('---')
-    st.markdown('''
-    ## Annual Percentage Returns
-
-    The bar chart below displays the annual percentage returns of the Dynamic Portfolio compared to the MSCI World ETF and SPY ETF.
-    ''')
+    st.markdown('### Annual Percentage Returns')
     portfolio_annual_returns = (1 + portfolio_returns).resample('Y').prod() - 1
     msci_annual_returns = (1 + msci_world_returns).resample('Y').prod() - 1
     spy_annual_returns = (1 + spy_returns).resample('Y').prod() - 1
@@ -616,8 +586,8 @@ elif selected_section == 'Mean Portfolio Evolution':
     st.markdown('''
     ## Mean Portfolio Evolution
 
-    This section explores the performance of a **Mean Portfolio** that uses the cumulative average allocation 
-    of the dynamic portfolio up to each rebalancing date. The portfolio is rebalanced monthly to maintain the evolving mean allocation.
+    This section shows the performance of a **Mean Portfolio** that rebalances monthly using the cumulative average allocation
+    of the dynamic portfolio up to that date.
     ''')
     weights_monthly = weights_df.resample('M').first()
     mean_weights_monthly = pd.DataFrame(index=weights_monthly.index, columns=weights_monthly.columns)
@@ -628,27 +598,23 @@ elif selected_section == 'Mean Portfolio Evolution':
     mean_weights_df = mean_weights_monthly.reindex(daily_returns.index, method='ffill').fillna(0)
     mean_portfolio_returns = (daily_returns * mean_weights_df.shift(1)).sum(axis=1)
     mean_portfolio_cum_returns = (1 + mean_portfolio_returns).cumprod()
+    
     common_index = mean_portfolio_cum_returns.index.intersection(msci_world_cum_returns.index).intersection(spy_cum_returns.index)
     mean_portfolio_cum_returns_aligned = mean_portfolio_cum_returns.loc[common_index].squeeze()
     spy_cum_returns_aligned = spy_cum_returns.loc[common_index].squeeze()
     msci_world_cum_returns_aligned = msci_world_cum_returns.loc[common_index].squeeze()
+    
     st.markdown('### Mean Portfolio Performance vs. Benchmarks')
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=mean_portfolio_cum_returns_aligned.index, 
-                            y=mean_portfolio_cum_returns_aligned, 
-                            mode='lines', 
-                            name='Mean Portfolio', 
-                            line=dict(width=3)))
+                             y=mean_portfolio_cum_returns_aligned, 
+                             mode='lines', name='Mean Portfolio', line=dict(width=3)))
     fig.add_trace(go.Scatter(x=spy_cum_returns_aligned.index, 
-                            y=spy_cum_returns_aligned, 
-                            mode='lines', 
-                            name='SPY ETF', 
-                            line=dict(dash='dash', width=2)))
+                             y=spy_cum_returns_aligned, 
+                             mode='lines', name='SPY ETF', line=dict(dash='dash', width=2)))
     fig.add_trace(go.Scatter(x=msci_world_cum_returns_aligned.index, 
-                            y=msci_world_cum_returns_aligned, 
-                            mode='lines', 
-                            name='MSCI World ETF (URTH)', 
-                            line=dict(dash='dot', width=2)))
+                             y=msci_world_cum_returns_aligned, 
+                             mode='lines', name='MSCI World ETF (URTH)', line=dict(dash='dot', width=2)))
     fig.update_layout(
         title='Mean Portfolio Performance',
         xaxis_title='Date',
@@ -660,7 +626,7 @@ elif selected_section == 'Mean Portfolio Evolution':
     )
     st.plotly_chart(fig, use_container_width=True)
     
-    st.markdown('### Mean Portfolio Weights Sample (Monthly Allocations)')
+    st.markdown('### Mean Portfolio Weights Sample (Monthly)')
     st.dataframe(mean_weights_monthly.head().style.background_gradient(cmap='Blues'), use_container_width=True)
     
     fig = make_subplots(
@@ -691,33 +657,20 @@ elif selected_section == 'Mean Portfolio Evolution':
     st.plotly_chart(fig, use_container_width=True)
     
     st.markdown('---')
-    st.markdown('''
-    ## Rolling Sharpe Ratio Comparison
-    
-    This section compares the rolling Sharpe Ratios of the Mean Portfolio and the MSCI World ETF.
-    ''')
-    mean_returns_aligned = mean_portfolio_returns.loc[common_index]
-    msci_returns_aligned = msci_world_returns.loc[mean_portfolio_returns.index].rolling(window=window_size).apply(
-        lambda x: (x.mean() / x.std()) * np.sqrt(252)
-    ).squeeze()
+    st.markdown('### Rolling Sharpe Ratio Comparison')
     mean_portfolio_rolling_sharpe = mean_portfolio_returns.rolling(window=window_size).apply(
         lambda x: (x.mean() / x.std()) * np.sqrt(252)
     ).squeeze()
+    msci_rolling_sharpe_aligned = msci_world_returns.loc[mean_portfolio_returns.index].rolling(window=window_size).apply(
+        lambda x: (x.mean() / x.std()) * np.sqrt(252)
+    ).squeeze()
     fig = go.Figure()
-    fig.add_trace(go.Scatter(
-        x=mean_portfolio_rolling_sharpe.index, 
-        y=mean_portfolio_rolling_sharpe,
-        mode='lines', 
-        name='Mean Portfolio', 
-        line=dict(color='green', width=2)
-    ))
-    fig.add_trace(go.Scatter(
-        x=msci_returns_aligned.index, 
-        y=msci_returns_aligned,
-        mode='lines', 
-        name='MSCI World ETF (URTH)', 
-        line=dict(color='red', dash='dash', width=2)
-    ))
+    fig.add_trace(go.Scatter(x=mean_portfolio_rolling_sharpe.index, 
+                             y=mean_portfolio_rolling_sharpe,
+                             mode='lines', name='Mean Portfolio', line=dict(color='green', width=2)))
+    fig.add_trace(go.Scatter(x=msci_rolling_sharpe_aligned.index, 
+                             y=msci_rolling_sharpe_aligned,
+                             mode='lines', name='MSCI World ETF (URTH)', line=dict(color='red', dash='dash', width=2)))
     fig.update_layout(
         title='Rolling Sharpe Ratio Comparison',
         xaxis_title='Date',
@@ -728,24 +681,16 @@ elif selected_section == 'Mean Portfolio Evolution':
         font=dict(size=14)
     )
     st.plotly_chart(fig, use_container_width=True)
-
+    
     st.markdown('---')
-    st.markdown('''
-    ## Rolling Drawdown Comparison
-
-    This section shows the rolling drawdown of the Mean Portfolio.
-    ''')
+    st.markdown('### Rolling Drawdown Comparison')
     mean_portfolio_drawdown = calculate_drawdown(mean_portfolio_cum_returns_aligned)
     msci_drawdown_aligned = calculate_drawdown(msci_world_cum_returns_aligned)
     fig = go.Figure()
-    fig.add_trace(go.Scatter(
-        x=mean_portfolio_drawdown.index, y=mean_portfolio_drawdown,
-        mode='lines', name='Mean Portfolio', line=dict(color='green', width=2)
-    ))
-    fig.add_trace(go.Scatter(
-        x=msci_drawdown_aligned.index, y=msci_drawdown_aligned,
-        mode='lines', name='MSCI World ETF (URTH)', line=dict(color='red', dash='dash', width=2)
-    ))
+    fig.add_trace(go.Scatter(x=mean_portfolio_drawdown.index, y=mean_portfolio_drawdown,
+                             mode='lines', name='Mean Portfolio', line=dict(color='green', width=2)))
+    fig.add_trace(go.Scatter(x=msci_drawdown_aligned.index, y=msci_drawdown_aligned,
+                             mode='lines', name='MSCI World ETF (URTH)', line=dict(color='red', dash='dash', width=2)))
     fig.update_layout(
         title='Rolling Drawdown',
         xaxis_title='Date',
@@ -757,13 +702,9 @@ elif selected_section == 'Mean Portfolio Evolution':
         font=dict(size=14)
     )
     st.plotly_chart(fig, use_container_width=True)
-
+    
     st.markdown('---')
-    st.markdown('''
-    ## Annual Percentage Returns
-
-    The bar chart below displays the annual percentage returns of the Mean Portfolio compared to the MSCI World ETF and SPY ETF.
-    ''')
+    st.markdown('### Annual Percentage Returns')
     mean_portfolio_annual_returns = (1 + mean_portfolio_returns).resample('Y').prod() - 1
     msci_annual_returns_aligned = (1 + msci_world_returns.loc[mean_portfolio_returns.index]).resample('Y').prod() - 1
     spy_annual_returns_aligned = (1 + spy_returns.loc[mean_portfolio_returns.index]).resample('Y').prod() - 1
@@ -798,6 +739,5 @@ elif selected_section == 'Mean Portfolio Evolution':
         font=dict(size=14)
     )
     st.plotly_chart(fig, use_container_width=True)
-
+    
     st.markdown('---')
-
